@@ -1,90 +1,76 @@
-﻿using omnicart_api.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Web.Http;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using omnicart_api.Models;
+using omnicart_api.Services;
 
 namespace omnicart_api.Controllers
 {
-    public class UserController : ApiController
+    [Route("api/users")]
+    [ApiController]
+    public class UserController : ControllerBase
     {
-        private static List<User> users = new List<User>
-        {
-            new User { id = 1, name = "John Doe", email = "john@example.com", password = "password123",role = "admin" }
-        };
+        private readonly UserService _userService;
 
-        [HttpGet]
-        [Route("api/users")]
-        public IHttpActionResult GetUsers()
+        public UserController(UserService userService)
         {
-            return Ok(users);
+            _userService = userService;
         }
 
-        // GET: api/users/{id}
         [HttpGet]
-        [Route("api/users/{id}", Name = "GetUser")]
-        public IHttpActionResult GetUser(int id)
+        public async Task<List<User>> Get() =>
+            await _userService.GetUsersAsync();
+
+        [HttpGet("{id:length(24)}")]
+        public async Task<ActionResult<User>> Get(string id)
         {
-            var user = users.FirstOrDefault(u => u.id == id);
+            var user = await _userService.GetUserByIdAsync(id);
+
             if (user == null)
             {
                 return NotFound();
             }
-            return Ok(user);
+
+            return user;
         }
 
-        // POST: api/users
         [HttpPost]
-        [Route("api/users")]
-        public IHttpActionResult CreateUser([FromBody] User user)
+        public async Task<IActionResult> Post(User newUser)
         {
-            if (user == null || string.IsNullOrEmpty(user.name) || string.IsNullOrEmpty(user.email))
-            {
-                return BadRequest("Invalid user data.");
-            }
+            await _userService.CreateUserAsync(newUser);
 
-            user.id = users.Count + 1; // Simple ID generation
-            users.Add(user);
-            return CreatedAtRoute("GetUser", new { id = user.id }, user);
+            return CreatedAtAction(nameof(Get), new { id = newUser.Id }, newUser);
         }
 
-        // PUT: api/users/{id}
-        [HttpPut]
-        [Route("api/users/{id}")]
-        public IHttpActionResult UpdateUser(int id, [FromBody] User updatedUser)
+        [HttpPut("{id:length(24)}")]
+        public async Task<IActionResult> Update(string id, User updatedUser)
         {
-            if (updatedUser == null)
-            {
-                return BadRequest("Invalid user data.");
-            }
+            var user = await _userService.GetUserByIdAsync(id);
 
-            var user = users.FirstOrDefault(u => u.id == id);
             if (user == null)
             {
                 return NotFound();
             }
 
-            user.name = updatedUser.name;
-            user.email = updatedUser.email;
-            user.password = updatedUser.password; // Ensure proper hashing in production
-            return Ok(user);
+            updatedUser.Id = user.Id;
+
+            await _userService.UpdateUserAsync(id, updatedUser);
+
+            return NoContent();
         }
 
-        // DELETE: api/user/{id}
-        [HttpDelete]
-        [Route("api/users/{id}")]
-        public IHttpActionResult DeleteUser(int id)
+        [HttpDelete("{id:length(24)}")]
+        public async Task<IActionResult> Delete(string id)
         {
-            var user = users.FirstOrDefault(u => u.id == id);
+            var user = await _userService.GetUserByIdAsync(id);
+
             if (user == null)
             {
                 return NotFound();
             }
 
-            users.Remove(user);
-            return StatusCode(HttpStatusCode.NoContent);
+            await _userService.DeleteUserAsync(id);
+
+            return NoContent();
         }
     }
 }

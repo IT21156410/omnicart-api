@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35312.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "omnicart-api", "omnicart-api\omnicart-api.csproj", "{020D115A-0FFD-47D9-825C-8A0CC4DFA9F3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "omnicart-api", "omnicart-api\omnicart-api.csproj", "{0C3B49EB-4F39-4899-9EFB-7A5D6BC79B2D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,12 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{020D115A-0FFD-47D9-825C-8A0CC4DFA9F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{020D115A-0FFD-47D9-825C-8A0CC4DFA9F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{020D115A-0FFD-47D9-825C-8A0CC4DFA9F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{020D115A-0FFD-47D9-825C-8A0CC4DFA9F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C3B49EB-4F39-4899-9EFB-7A5D6BC79B2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C3B49EB-4F39-4899-9EFB-7A5D6BC79B2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C3B49EB-4F39-4899-9EFB-7A5D6BC79B2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C3B49EB-4F39-4899-9EFB-7A5D6BC79B2D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6582EA8D-A9E8-433E-A007-DC9066EC5B47}
 	EndGlobalSection
 EndGlobal
