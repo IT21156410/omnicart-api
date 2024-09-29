@@ -1,5 +1,13 @@
-﻿namespace omnicart_api.Models
-{
+﻿// ***********************************************************************
+// APP NAME         : OmnicartAPI
+// Author           : Fonseka M.M.N.H
+// Student ID       : IT21156410
+// Description      : MongoDB settings Class (Connection String, Database Name, Collection Name).
+// Tutorial         : https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio
+// ***********************************************************************
+
+namespace omnicart_api.Models
+{ 
     public class MongoDbSettings
     {
         public string ConnectionString { get; set; } = null!;

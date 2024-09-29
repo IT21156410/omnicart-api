@@ -1,5 +1,14 @@
-﻿using MongoDB.Bson;
+﻿// ***********************************************************************
+// APP NAME         : OmnicartAPI
+// Author           : Fonseka M.M.N.H
+// Student ID       : IT21156410
+// Description      : Model representing a user document in MongoDB users collection.
+// Tutorial         : https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio
+// ***********************************************************************
+
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+
 
 namespace omnicart_api.Models
 {
@@ -10,14 +19,15 @@ namespace omnicart_api.Models
         public string? Id { get; set; }
 
         [BsonElement("name")]
-        public string name { get; set; }
+        public required string Name { get; set; }
 
         [BsonElement("email")]
-        public string email { get; set; }
+        public required string Email { get; set; }
 
-        public string password { get; set; }
+        [BsonElement("password")]
+        public required string Password { get; set; }
 
         [BsonElement("role")]
-        public string role { get; set; }
+        public required string Role { get; set; }
     }
 }
