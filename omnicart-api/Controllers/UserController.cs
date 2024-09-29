@@ -35,8 +35,35 @@ namespace omnicart_api.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public async Task<List<User>> Get() =>
-            await _userService.GetUsersAsync();
+        public async Task<ActionResult<AppResponse<List<User>>>> Get()
+        {
+            try
+            {
+                var users = await _userService.GetUsersAsync();
+                var response = new AppResponse<List<User>>
+                {
+                    Success = true,
+                    Data = users,
+                    Message = "Users retrieved successfully"
+                };
+                return response;
+                 
+            }
+            catch (System.Exception ex)
+            {
+                var response = new AppResponse<List<User>>
+                {
+                    Success = false,
+                    Data = [],
+                    Message = "An error occurred while retrieving users",
+                    Error = ex.Message,
+                    ErrorCode = 500
+                };
+
+                return StatusCode(500, response);
+            }
+
+        }
 
         /// <summary>
         ///  Handles GET requests to retrieve a specific user by ID.
@@ -44,16 +71,27 @@ namespace omnicart_api.Controllers
         /// <param name="id">The ObjectId of the user</param>
         /// <returns>The user object if found</returns>
         [HttpGet("{id:length(24)}")]
-        public async Task<ActionResult<User>> Get(string id)
+        public async Task<ActionResult<AppResponse<User>>> Get(string id)
         {
             var user = await _userService.GetUserByIdAsync(id);
 
             if (user == null)
             {
-                return NotFound();
+                return NotFound(new AppResponse<User>
+                {
+                    Success = false,
+                    Message = "User not found",
+                    ErrorCode = 404
+                });
+                
             }
 
-            return user;
+            return Ok(new AppResponse<User>
+            {
+                Success = true,
+                Data = user,
+                Message = "User retrieved successfully"
+            });
         }
 
         /// <summary>
@@ -62,11 +100,16 @@ namespace omnicart_api.Controllers
         /// <param name="newUser">The new user object</param>
         /// <returns>CreatedAtAction result with the new user</returns>
         [HttpPost]
-        public async Task<IActionResult> Post(User newUser)
+        public async Task<ActionResult<AppResponse<User>>> Post(User newUser)
         {
             await _userService.CreateUserAsync(newUser);
 
-            return CreatedAtAction(nameof(Get), new { id = newUser.Id }, newUser);
+            return CreatedAtAction(nameof(Get), new { id = newUser.Id }, new AppResponse<User>
+            {
+                Success = true,
+                Data = newUser,
+                Message = "User created successfully"
+            });
         }
 
         /// <summary>
@@ -74,22 +117,32 @@ namespace omnicart_api.Controllers
         /// </summary>
         /// <param name="id">The ObjectId of the user</param>
         /// <param name="updatedUser"></param>
-        /// <returns>NoContent result if successful</returns>
+        /// <returns>ActionResult<AppResponse<User>> result if successful</returns>
         [HttpPut("{id:length(24)}")]
-        public async Task<IActionResult> Update(string id, User updatedUser)
+        public async Task<ActionResult<AppResponse<User>>> Update(string id, User updatedUser)
         {
             var user = await _userService.GetUserByIdAsync(id);
 
             if (user == null)
             {
-                return NotFound();
+                return NotFound(new AppResponse<User>
+                {
+                    Success = false,
+                    Message = "User not found",
+                    ErrorCode = 404
+                });
             }
 
             updatedUser.Id = user.Id;
 
             await _userService.UpdateUserAsync(id, updatedUser);
 
-            return NoContent();
+            return Ok(new AppResponse<User>
+            {
+                Success = true,
+                Data = updatedUser,
+                Message = "User updated successfully"
+            });
         }
 
         /// <summary>
@@ -98,18 +151,28 @@ namespace omnicart_api.Controllers
         /// <param name="id">The ObjectId of the user</param>
         /// <returns>NoContent result if successful</returns>
         [HttpDelete("{id:length(24)}")]
-        public async Task<IActionResult> Delete(string id)
+        public async Task<ActionResult<AppResponse<User>>> Delete(string id)
         {
             var user = await _userService.GetUserByIdAsync(id);
 
             if (user == null)
             {
-                return NotFound();
+                return NotFound(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "User not found",
+                    ErrorCode = 404
+                });
             }
 
             await _userService.DeleteUserAsync(id);
 
-            return NoContent();
+            return Ok(new AppResponse<User>
+            {
+                Success = true,
+                Data = user,
+                Message = "User deleted successfully"
+            });
         }
     }
 }
