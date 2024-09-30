@@ -29,5 +29,17 @@ namespace omnicart_api.Models
 
         [BsonElement("role")]
         public required string Role { get; set; }
+
+        [BsonElement("passwordReset")]
+        public PasswordReset? PasswordReset { get; set; }
+    }
+
+    public class PasswordReset
+    {
+        [BsonElement("token")]
+        public required string Token { get; set; }
+
+        [BsonElement("expiryAt")]
+        public required DateTime ExpiryAt { get; set; }
     }
 }
