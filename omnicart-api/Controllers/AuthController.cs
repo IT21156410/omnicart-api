@@ -1,3 +1,10 @@
+// ***********************************************************************
+// APP NAME         : OmnicartAPI
+// Author           : Prashantha K.G.M
+// Student ID       : IT21169908
+// Description      : Handle HTTP API requests related to authentication.
+// Tutorial         : https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio
+// ***********************************************************************
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +19,20 @@ namespace omnicart_api.Controllers
     {
         private readonly AuthService _authService;
 
+        /// <summary>
+        /// Initializes the AuthController with AuthService dependency.
+        /// </summary>
+        /// <param name="authService">The authentication service</param>
         public AuthController(AuthService authService)
         {
             _authService = authService;
         }
 
+        /// <summary>
+        /// Handles POST requests to authenticate a user (login).
+        /// </summary>
+        /// <param name="loginRequest">The login credentials</param>
+        /// <returns>JWT token if authentication is successful</returns>
         [HttpPost("login")]
         public async Task<ActionResult<AppResponse<string>>> Login(LoginRequest loginRequest)
         {
@@ -54,6 +70,11 @@ namespace omnicart_api.Controllers
             }
         }
 
+        /// <summary>
+        /// Handles POST requests to register a new user.
+        /// </summary>
+        /// <param name="registerRequest">The registration details of the new user</param>
+        /// <returns>Details of the registered user if successful</returns>
         [HttpPost("register")]
         public async Task<ActionResult<AppResponse<User>>> Register(RegisterRequest registerRequest)
         {
@@ -92,6 +113,11 @@ namespace omnicart_api.Controllers
             }
         }
 
+        /// <summary>
+        /// Handles POST requests for password reset via email.
+        /// </summary>
+        /// <param name="email">The email of the user</param>
+        /// <returns>Action result indicating success or failure</returns>
         [HttpPost("forgot-password")]
         public async Task<ActionResult<AppResponse<string>>> ForgotPassword(ForgotPasswordRequest emailRequest)
         {
@@ -126,6 +152,11 @@ namespace omnicart_api.Controllers
             }
         }
 
+        /// <summary>
+        /// Handles POST requests to reset the user's password.
+        /// </summary>
+        /// <param name="resetRequest">The reset password request object</param>
+        /// <returns>Action result indicating success or failure</returns>
         [HttpPost("reset-password")]
         public async Task<ActionResult<AppResponse<string>>> ResetPassword(ResetPasswordRequest resetRequest)
         {
@@ -160,6 +191,11 @@ namespace omnicart_api.Controllers
             }
         }
 
+        /// <summary>
+        /// Handles POST requests to change the user's password.
+        /// </summary>
+        /// <param name="changePasswordRequest">The change password request object</param>
+        /// <returns>Action result indicating success or failure</returns>
         [HttpPost("change-password")]
         public async Task<ActionResult<AppResponse<string>>> ChangePassword(ChangePasswordRequest changePasswordRequest)
         {

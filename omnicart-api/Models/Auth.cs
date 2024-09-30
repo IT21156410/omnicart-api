@@ -1,3 +1,11 @@
+// ***********************************************************************
+// APP NAME         : OmnicartAPI
+// Author           : Prashantha K.G.M
+// Student ID       : IT21169908
+// Description      : Auth related classes as types/models.
+// Tutorial         : https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio
+// ***********************************************************************
+
 namespace omnicart_api.Models
 {
     public class LoginRequest
