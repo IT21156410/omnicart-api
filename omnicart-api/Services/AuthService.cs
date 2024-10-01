@@ -26,18 +26,20 @@ namespace omnicart_api.Services
         private readonly IMongoCollection<User> _userCollection;
         private readonly string _jwtSecret;
         private readonly int _jwtLifespan;
+        private readonly UserService _userService;
 
         /// <summary>
         /// Initializes the AuthService with MongoDB client, database, and users collection.
         /// </summary>
         /// <param name="mongoDbSettings"></param>
-        public AuthService(IOptions<MongoDbSettings> mongoDbSettings)
+        public AuthService(IOptions<MongoDbSettings> mongoDbSettings, UserService userService)
         {
             var mongoClient = new MongoClient(mongoDbSettings.Value.ConnectionString);
             var mongoDatabase = mongoClient.GetDatabase(mongoDbSettings.Value.DatabaseName);
             _userCollection = mongoDatabase.GetCollection<User>(mongoDbSettings.Value.UsersCollectionName);
             _jwtSecret = "OmnicartAPI@jwtSecret";
             _jwtLifespan = 1440; //minutes
+            _userService = userService;
         }
 
         /// <summary>
@@ -99,8 +101,9 @@ namespace omnicart_api.Services
             if (user == null) return false;
 
             // Generate reset token
-            var resetToken = GeneratePasswordResetToken(user);
 
+            var resetToken = await GeneratePasswordResetTokenAsync(user);
+             
             var emailService = new EmailService();
             await emailService.SendPasswordResetAsync(user.Email, resetToken);
 
@@ -135,16 +138,16 @@ namespace omnicart_api.Services
         /// <returns>True if password changed successfully, false if old password is incorrect</returns>
         public async Task<bool> ChangePasswordAsync(ChangePasswordRequest changePasswordRequest)
         {
-            var changePswUser = await _userCollection.Find(user => user.Email == changePasswordRequest.Email).FirstOrDefaultAsync();
+            //var changePswUser = await _userCollection.Find(user => user.Email == changePasswordRequest.Email).FirstOrDefaultAsync();
 
-            if (changePswUser == null || !VerifyPassword(changePasswordRequest.CurrentPassword, changePswUser.Password))
-            {
-                return false;
-            }
+            //if (changePswUser == null || !VerifyPassword(changePasswordRequest.CurrentPassword, changePswUser.Password))
+            //{
+            //    return false;
+            //}
 
-            changePswUser.Password = HashPassword(changePasswordRequest.NewPassword);
+            //changePswUser.Password = HashPassword(changePasswordRequest.NewPassword);
 
-            await _userCollection.ReplaceOneAsync(user => user.Id == changePswUser.Id, changePswUser);
+            //await _userCollection.ReplaceOneAsync(user => user.Id == changePswUser.Id, changePswUser);
 
             return true;
         }
@@ -211,7 +214,7 @@ namespace omnicart_api.Services
         /// <returns>The generated token as a string</returns>
         private async Task<string> GeneratePasswordResetTokenAsync(User user)
         {
-            using (var rng = new RNGCryptoServiceProvider())
+            using (var rng = RandomNumberGenerator.Create())
             {
                 var tokenData = new byte[32];
                 rng.GetBytes(tokenData);
@@ -222,7 +225,7 @@ namespace omnicart_api.Services
                 user.PasswordReset.Token = token;
                 user.PasswordReset.ExpiryAt = DateTime.UtcNow.AddHours(1); // valid for 1 hour
 
-                await _userService.UpdateUserAsync(user.Id, user);
+                await _userService.UpdateUserAsync(user.Id!, user);
 
                 return token;
             }
