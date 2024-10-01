@@ -42,4 +42,12 @@ namespace omnicart_api.Models
         [BsonElement("expiryAt")]
         public required DateTime ExpiryAt { get; set; }
     }
+
+    public class UpdateUserDto
+    {
+        public required string Name { get; set; } 
+        public required string Email { get; set; }  
+        public string? Role { get; set; }  
+ 
+    }
 }

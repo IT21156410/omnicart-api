@@ -119,11 +119,11 @@ namespace omnicart_api.Controllers
         /// <param name="updatedUser"></param>
         /// <returns>ActionResult<AppResponse<User>> result if successful</returns>
         [HttpPut("{id:length(24)}")]
-        public async Task<ActionResult<AppResponse<User>>> Update(string id, User updatedUser)
+        public async Task<ActionResult<AppResponse<User>>> Update(string id, UpdateUserDto updatedUser)
         {
-            var user = await _userService.GetUserByIdAsync(id);
+            var existingUser = await _userService.GetUserByIdAsync(id);
 
-            if (user == null)
+            if (existingUser == null)
             {
                 return NotFound(new AppResponse<User>
                 {
@@ -132,15 +132,18 @@ namespace omnicart_api.Controllers
                     ErrorCode = 404
                 });
             }
+             
+            existingUser.Name = updatedUser.Name;
+            existingUser.Email = updatedUser.Email;
+            existingUser.Role = updatedUser.Role ?? existingUser.Role;
+            existingUser.Password = existingUser.Password;
 
-            updatedUser.Id = user.Id;
-
-            await _userService.UpdateUserAsync(id, updatedUser);
+            await _userService.UpdateUserAsync(id, existingUser);
 
             return Ok(new AppResponse<User>
             {
                 Success = true,
-                Data = updatedUser,
+                Data = existingUser,
                 Message = "User updated successfully"
             });
         }
