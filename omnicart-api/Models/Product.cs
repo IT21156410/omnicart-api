@@ -33,6 +33,7 @@ namespace omnicart_api.Models
 
         [BsonElement("condition")]
         [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public Condition Condition { get; set; } = Condition.New;  // Default to 'New'
 
         [BsonElement("status")]
