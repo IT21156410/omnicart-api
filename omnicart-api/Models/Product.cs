@@ -39,7 +39,10 @@ namespace omnicart_api.Models
         [BsonElement("status")]
         [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
         [JsonConverter(typeof(JsonStringEnumConverter))] // Serialize enum as string in JSON response
-        public Status Status { get; set; } = Status.Active;  // Default to 'Active'
+        public Status Status { get; set; } = Status.Pending;  // Default to 'Pending'
+
+        [BsonElement("description")]
+        public required string Description { get; set; }
 
         [BsonElement("stock")]
         public int Stock { get; set; } = 0;
