@@ -13,6 +13,7 @@ using MongoDB.Bson;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json.Converters;
 using System.Runtime.Serialization;
+using System.ComponentModel.DataAnnotations;
 
 namespace omnicart_api.Models
 {
@@ -23,9 +24,11 @@ namespace omnicart_api.Models
         public string? Id { get; set; } = null!;
 
         [BsonElement("name")]
+        [Required]
         public string Name { get; set; } = null!;
 
         [BsonElement("category")]
+        [Required]
         public string Category { get; set; } = null!;
 
         [BsonElement("photos")]
@@ -34,48 +37,61 @@ namespace omnicart_api.Models
         [BsonElement("condition")]
         [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
         [JsonConverter(typeof(JsonStringEnumConverter))]
+        [Required]
         public Condition Condition { get; set; } = Condition.New;  // Default to 'New'
 
         [BsonElement("status")]
         [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
         [JsonConverter(typeof(JsonStringEnumConverter))] // Serialize enum as string in JSON response
+        [Required]
         public Status Status { get; set; } = Status.Pending;  // Default to 'Pending'
 
         [BsonElement("description")]
+        [Required]
         public required string Description { get; set; }
 
         [BsonElement("stock")]
+        [Required]
         public int Stock { get; set; } = 0;
 
         [BsonElement("sku")]
+        [Required]
+        [StringLength(13, ErrorMessage = "The SKU must be a string with the length less than 13.")]
         public string SKU { get; set; } = null!;
 
         [BsonElement("price")]
+        [Required]
         [BsonRepresentation(BsonType.Decimal128)]
         public decimal Price { get; set; } = 0.0M;
 
         [BsonElement("discount")]
+        [Required]
         [BsonRepresentation(BsonType.Decimal128)]
         public decimal Discount { get; set; } = 0.0M;
 
         [BsonElement("productWeight")]
         [BsonRepresentation(BsonType.Decimal128)]
+        [Required]
         public decimal ProductWeight { get; set; } = 0.0M;
 
         [BsonElement("width")]
         [BsonRepresentation(BsonType.Decimal128)]
+        [Required]
         public decimal Width { get; set; } = 0.0M;
 
         [BsonElement("height")]
         [BsonRepresentation(BsonType.Decimal128)]
+        [Required]
         public decimal Height { get; set; } = 0.0M;
 
         [BsonElement("length")]
         [BsonRepresentation(BsonType.Decimal128)]
+        [Required]
         public decimal Length { get; set; } = 0.0M;
 
         [BsonElement("shippingFee")]
         [BsonRepresentation(BsonType.Decimal128)]
+        [Required]
         public decimal ShippingFee { get; set; } = 0.0M;
     }
 
@@ -103,10 +119,12 @@ namespace omnicart_api.Models
     public class UpdateProductStatusDto
     {
         [JsonConverter(typeof(JsonStringEnumConverter))]
+        [Required]
         public Status Status { get; set; }
     }
     public class UpdateProductStockDto
-    { 
+    {
+        [Required]
         public int Stock { get; set; }
     }
 }

@@ -9,12 +9,14 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using omnicart_api.Models;
+using omnicart_api.Requests;
 using omnicart_api.Services;
 
 namespace omnicart_api.Controllers
 {
     [Route("api/auth")]
     [ApiController]
+    [ServiceFilter(typeof(ValidateModelAttribute))]
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;

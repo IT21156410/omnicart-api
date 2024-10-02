@@ -9,6 +9,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using omnicart_api.Models;
+using omnicart_api.Requests;
 using omnicart_api.Services;
 
 // https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio
@@ -17,6 +18,7 @@ namespace omnicart_api.Controllers
 {
     [Route("api/users")]
     [ApiController]
+    [ServiceFilter(typeof(ValidateModelAttribute))]
     public class UserController : ControllerBase
     {
         private readonly UserService _userService;

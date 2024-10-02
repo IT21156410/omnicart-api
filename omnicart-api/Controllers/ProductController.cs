@@ -7,14 +7,17 @@
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using omnicart_api.Models;
+using omnicart_api.Requests;
 using omnicart_api.Services;
 
 namespace omnicart_api.Controllers
 {
     [Route("api/products")]
     [ApiController]
+    [ServiceFilter(typeof(ValidateModelAttribute))]
     public class ProductController : ControllerBase
     {
         private readonly ProductService _productService;
@@ -45,14 +48,26 @@ namespace omnicart_api.Controllers
 
             // Validation
             if (string.IsNullOrWhiteSpace(newProduct.Name))
-                return BadRequest(new AppResponse<Product> { Success = false, Message = "Product name is required" });
+                ModelState.AddModelError(nameof(Product.Name), "Product name is required");
             if (string.IsNullOrWhiteSpace(newProduct.Category))
-                return BadRequest(new AppResponse<Product> { Success = false, Message = "Product category is required" });
+                ModelState.AddModelError(nameof(Product.Category), "Product category is required");
             if (newProduct.Price <= 0)
-                return BadRequest(new AppResponse<Product> { Success = false, Message = "Product price must be greater than zero" });
+                ModelState.AddModelError(nameof(Product.Price), "Product price must be greater than zero");
             if (newProduct.Stock < 0)
-                return BadRequest(new AppResponse<Product> { Success = false, Message = "Stock cannot be negative" });
+                ModelState.AddModelError(nameof(Product.Stock), "Stock cannot be negative");
 
+            if (!ModelState.IsValid)
+            {
+                return UnprocessableEntity(new AppResponse<Product>
+                {
+                    Success = false,
+                    Message = "One or more validation errors occurred.",
+                    Error = "Unprocessable Entity",
+                    ErrorCode = 422,
+                    ErrorData = UnprocessableEntity(ModelState)
+                });
+
+            }
 
             await _productService.CreateProductAsync(newProduct);
             return Ok(new AppResponse<Product> { Success = true, Data = newProduct, Message = "Product created successfully" });
@@ -85,9 +100,22 @@ namespace omnicart_api.Controllers
 
             // Validation
             if (updatedProduct.Price <= 0)
-                return BadRequest(new AppResponse<Product> { Success = false, Message = "Product price must be greater than zero" });
+                ModelState.AddModelError(nameof(Product.Price), "Product price must be greater than zero");
             if (updatedProduct.Stock < 0)
-                return BadRequest(new AppResponse<Product> { Success = false, Message = "Stock cannot be negative" });
+                ModelState.AddModelError(nameof(Product.Stock), "Stock cannot be negative");
+
+            if (!ModelState.IsValid)
+            {
+                return UnprocessableEntity(new AppResponse<Product>
+                {
+                    Success = false,
+                    Message = "One or more validation errors occurred.",
+                    Error = "Unprocessable Entity",
+                    ErrorCode = 422,
+                    ErrorData = UnprocessableEntity(ModelState)
+                });
+
+            }
 
             await _productService.UpdateProductAsync(id, updatedProduct);
             return Ok(new AppResponse<Product> { Success = true, Data = updatedProduct, Message = "Product updated successfully" });
@@ -111,7 +139,7 @@ namespace omnicart_api.Controllers
         }
 
         // Activate/Deactivate a product
-        [HttpPut("{id:length(24)}/status")]
+        [HttpPatch("{id:length(24)}/status")]
         public async Task<ActionResult<AppResponse<Product>>> SetProductStatus(string id, [FromBody] UpdateProductStatusDto status)
         {
             // TODO: Authorization Check
@@ -123,7 +151,7 @@ namespace omnicart_api.Controllers
             if (existingProduct == null)
                 return NotFound(new AppResponse<Product> { Success = false, Message = "Product not found" });
 
-              await _productService.SetProductStatusAsync(id, status.Status);
+            await _productService.SetProductStatusAsync(id, status.Status);
 
             existingProduct.Status = status.Status;
 
@@ -131,7 +159,7 @@ namespace omnicart_api.Controllers
         }
 
         // Manage stock (add/remove stock)
-        [HttpPut("{id:length(24)}/stock")]
+        [HttpPatch("{id:length(24)}/stock")]
         public async Task<ActionResult<AppResponse<Product>>> UpdateStock(string id, [FromBody] UpdateProductStockDto newStock)
         {
             // TODO: Authorization Check
@@ -142,9 +170,22 @@ namespace omnicart_api.Controllers
 
             if (existingProduct == null)
                 return NotFound(new AppResponse<Product> { Success = false, Message = "Product not found" });
-
+             
             if (newStock.Stock < 0)
-                return BadRequest(new AppResponse<Product> { Success = false, Message = "Stock cannot be negative" });
+                ModelState.AddModelError(nameof(Product.Stock), "Stock cannot be negative");
+
+            if (!ModelState.IsValid)
+            {
+                return UnprocessableEntity(new AppResponse<Product>
+                {
+                    Success = false,
+                    Message = "One or more validation errors occurred.",
+                    Error = "Unprocessable Entity",
+                    ErrorCode = 422,
+                    ErrorData = UnprocessableEntity(ModelState)
+                });
+
+            }
 
             await _productService.UpdateStockAsync(id, newStock.Stock);
 

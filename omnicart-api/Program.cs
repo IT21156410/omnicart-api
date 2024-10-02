@@ -6,7 +6,9 @@
 // Tutorial         : https://learn.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-8.0
 // ***********************************************************************
 
+using Microsoft.AspNetCore.Mvc;
 using omnicart_api.Models;
+using omnicart_api.Requests;
 using omnicart_api.Services;
 
 var MyAllowSpecificOrigins = "AllowReactApp";
@@ -19,15 +21,19 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                         policy.WithOrigins("http://localhost:5173")  
-                               .AllowAnyHeader()                      
-                               .AllowAnyMethod()                      
-                               .AllowCredentials()                    
-                               .WithExposedHeaders("Access-Control-Allow-Origin")  
-                               .SetIsOriginAllowed((origin) => true)  
-                               .SetPreflightMaxAge(TimeSpan.FromMinutes(10)); 
+                          policy.WithOrigins("http://localhost:5173")
+                                .AllowAnyHeader()
+                                .AllowAnyMethod()
+                                .AllowCredentials()
+                                .WithExposedHeaders("Access-Control-Allow-Origin")
+                                .SetIsOriginAllowed((origin) => true)
+                                .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
                       });
 });
+
+builder.Services.AddScoped<ValidateModelAttribute>();
+builder.Services.Configure<ApiBehaviorOptions>(options
+    => options.SuppressModelStateInvalidFilter = true);
 
 builder.Services.Configure<MongoDbSettings>(
     builder.Configuration.GetSection("MongoDbSettings"));
@@ -36,6 +42,7 @@ builder.Services.AddSingleton<AuthService>();
 builder.Services.AddSingleton<UserService>();
 builder.Services.AddSingleton<EmailService>();
 builder.Services.AddSingleton<ProductService>();
+
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
