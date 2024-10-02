@@ -32,6 +32,9 @@ namespace omnicart_api.Models
 
         [BsonElement("passwordReset")]
         public PasswordReset? PasswordReset { get; set; }
+
+        [BsonElement("twoFAVerify")]
+        public TwoFAVerify? TwoFAVerify { get; set; }
     }
 
     public class PasswordReset
@@ -41,6 +44,18 @@ namespace omnicart_api.Models
 
         [BsonElement("expiryAt")]
         public required DateTime ExpiryAt { get; set; }
+    }
+
+    public class TwoFAVerify
+    {
+        [BsonElement("code")]
+        public required string Token { get; set; }
+
+        [BsonElement("expiryAt")]
+        public required DateTime ExpiryAt { get; set; }
+
+        [BsonElement("isVerified")]
+        public bool IsVerified { get; set; }
     }
 
     public class UpdateUserDto

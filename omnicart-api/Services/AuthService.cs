@@ -17,6 +17,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace omnicart_api.Services
 {
@@ -59,6 +60,7 @@ namespace omnicart_api.Services
             }
 
             var token = await GenerateJwtTokenAsync(loginUser);
+            await Generate2FAVerifyTokenAsync(loginUser);
 
             return new AuthResponse(loginUser, token);
         }
@@ -90,6 +92,8 @@ namespace omnicart_api.Services
 
             var token = await GenerateJwtTokenAsync(newUser);
             newUser.Password = "";
+
+            await Generate2FAVerifyTokenAsync(newUser);
 
             return new AuthResponse(newUser, token);
         }
@@ -253,6 +257,33 @@ namespace omnicart_api.Services
                 await _userService.UpdateUserAsync(user.Id!, user);
 
                 return token;
+            }
+        }
+
+        /// <summary>
+        /// Generates a two-factor authentication (2FA) verification token for the given user and stores it in the database with an expiration time.
+        /// </summary>
+        /// <param name="user">The user object for whom the token is being generated</param>
+        /// <returns>The generated token as a string</returns>
+        private async Task<string> Generate2FAVerifyTokenAsync(User user)
+        {
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                byte[] randomNumber = new byte[4];
+                rng.GetBytes(randomNumber);
+
+                // Convert the random number to a uint, then ensure it's in the 6-digit range
+                uint code = BitConverter.ToUInt32(randomNumber, 0) % 900000 + 100000; 
+
+                user.TwoFAVerify ??= new TwoFAVerify
+                {
+                    Token = code.ToString(),
+                    ExpiryAt = DateTime.UtcNow.AddMinutes(5), // token valid for 5 minutes
+                };
+
+                await _userService.UpdateUserAsync(user.Id!, user);
+
+                return code.ToString();
             }
         }
 

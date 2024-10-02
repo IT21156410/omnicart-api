@@ -11,23 +11,81 @@ using Microsoft.AspNetCore.Mvc;
 using omnicart_api.Models;
 using omnicart_api.Requests;
 using omnicart_api.Services;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace omnicart_api.Controllers
 {
-    [Route("api/auth")]
+    [Route("api")]
     [ApiController]
     [ServiceFilter(typeof(ValidateModelAttribute))]
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
+        private readonly UserService _userService;
 
         /// <summary>
         /// Initializes the AuthController with AuthService dependency.
         /// </summary>
         /// <param name="authService">The authentication service</param>
-        public AuthController(AuthService authService)
+        public AuthController(AuthService authService, UserService userService)
         {
             _authService = authService;
+            _userService = userService;
+        }
+
+        /// <summary>
+        /// Handles GET requests to retrieve the authenticated user's own data.
+        /// </summary>
+        /// <returns>The authenticated user's data</returns>
+        [HttpGet("own-user")]
+        public async Task<ActionResult<AppResponse<User>>> GetOwnUser()
+        {
+            try
+            {
+                // user ID from the JWT token (retrieved from the authenticated context)
+                var userId = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
+
+                if (userId == null)
+                {
+                    return Unauthorized(new AppResponse<User>
+                    {
+                        Success = false,
+                        Message = "User is not authenticated",
+                        ErrorCode = 401
+                    });
+                }
+
+                var user = await _userService.GetUserByIdAsync(userId);
+
+                if (user == null)
+                {
+                    return NotFound(new AppResponse<User>
+                    {
+                        Success = false,
+                        Message = "User not found",
+                        ErrorCode = 403
+                    });
+                }
+
+                return Ok(new AppResponse<User>
+                {
+                    Success = true,
+                    Data = user,
+                    Message = "User data retrieved successfully"
+                });
+            }
+            catch (System.Exception ex)
+            {
+                var response = new AppResponse<User>
+                {
+                    Success = false,
+                    Message = "An error occurred while retrieving user data",
+                    Error = ex.Message,
+                    ErrorCode = 500
+                };
+
+                return StatusCode(500, response);
+            }
         }
 
         /// <summary>
