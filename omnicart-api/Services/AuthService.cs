@@ -17,7 +17,6 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
-using System.Security.Cryptography;
 
 namespace omnicart_api.Services
 {
@@ -37,7 +36,7 @@ namespace omnicart_api.Services
             var mongoClient = new MongoClient(mongoDbSettings.Value.ConnectionString);
             var mongoDatabase = mongoClient.GetDatabase(mongoDbSettings.Value.DatabaseName);
             _userCollection = mongoDatabase.GetCollection<User>(mongoDbSettings.Value.UsersCollectionName);
-            _jwtSecret = "OmnicartAPI@jwtSecret";
+            _jwtSecret = "OmnicartAPI@jwtSecretIT211699080PRASHANTHAKGMSLIITEADASSIGMENT01C#DOTNETRESRAPI";
             _jwtLifespan = 1440; //minutes
             _userService = userService;
         }
@@ -47,7 +46,7 @@ namespace omnicart_api.Services
         /// </summary>
         /// <param name="loginRequest">The login credentials</param>
         /// <returns>JWT Token if successful, null if failed</returns>
-        public async Task<string?> LoginAsync(LoginRequest loginRequest)
+        public async Task<AuthResponse?> LoginAsync(LoginRequest loginRequest)
         {
             var email = loginRequest.Email;
             var password = loginRequest.Password;
@@ -59,7 +58,9 @@ namespace omnicart_api.Services
                 return null;
             }
 
-            return GenerateJwtToken(loginUser);
+            var token = await GenerateJwtTokenAsync(loginUser);
+
+            return new AuthResponse(loginUser, token);
         }
 
         /// <summary>
@@ -67,7 +68,7 @@ namespace omnicart_api.Services
         /// </summary>
         /// <param name="registerRequest">The registration details of the new user</param>
         /// <returns>The created user's information if successful, null if the registration fails</returns>
-        public async Task<User?> RegisterAsync(RegisterRequest registerRequest)
+        public async Task<AuthResponse?> RegisterAsync(RegisterRequest registerRequest)
         {
             var existingUser = await _userCollection.Find(user => user.Email == registerRequest.Email).FirstOrDefaultAsync();
             if (existingUser != null)
@@ -75,7 +76,7 @@ namespace omnicart_api.Services
                 return null;
             }
 
-            var newUser = new User
+            var createUser = new User
             {
                 Name = registerRequest.Name,
                 Email = registerRequest.Email,
@@ -83,10 +84,14 @@ namespace omnicart_api.Services
                 Role = registerRequest.Role
             };
 
-            await _userCollection.InsertOneAsync(newUser);
+            await _userCollection.InsertOneAsync(createUser);
 
-            newUser.Password = null;
-            return newUser;
+            User newUser = await _userCollection.Find(user => user.Email == registerRequest.Email).FirstOrDefaultAsync();
+
+            var token = await GenerateJwtTokenAsync(newUser);
+            newUser.Password = "";
+
+            return new AuthResponse(newUser, token);
         }
 
         /// <summary>
@@ -96,18 +101,23 @@ namespace omnicart_api.Services
         /// <returns>True if email was sent, false if user not found</returns>
         public async Task<bool> SendResetPasswordEmailAsync(string email)
         {
-            var user = await _userCollection.Find(user => user.Email == email).FirstOrDefaultAsync();
+            try
+            {
+                var user = await _userCollection.Find(user => user.Email == email).FirstOrDefaultAsync();
 
-            if (user == null) return false;
+                if (user == null) return false;
 
-            // Generate reset token
+                var resetToken = await GeneratePasswordResetTokenAsync(user);
 
-            var resetToken = await GeneratePasswordResetTokenAsync(user);
-             
-            var emailService = new EmailService();
-            await emailService.SendPasswordResetAsync(user.Email, resetToken);
+                var emailService = new EmailService();
+                await emailService.SendPasswordResetAsync(user.Email, resetToken);
 
-            return true;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to generate password reset: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -152,8 +162,11 @@ namespace omnicart_api.Services
             return true;
         }
 
-        // Utility methods for hashing, token generation, and verification
 
+
+
+        // Utility methods for hashing, token generation, and verification
+        // 
         /// <summary>
         /// Hashes the given password using SHA256.
         /// </summary>
@@ -179,32 +192,41 @@ namespace omnicart_api.Services
         }
 
         /// <summary>
-        /// Generates a JWT token for the authenticated user.
+        /// Generates a JWT token for the authenticated user asynchronously.
         /// </summary>
         /// <param name="user">The user object for whom the token is being generated</param>
         /// <returns>A JWT token as a string</returns>
-        private string GenerateJwtToken(User user)
+        private async Task<string> GenerateJwtTokenAsync(User user)
         {
-            var claims = new[]
+            try
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // set unique identifier
-                // new Claim("role", user.Role) // Custom set user role
-            };
+                var claims = new[]
+                {
+                    new Claim(JwtRegisteredClaimNames.Sub, user.Id!),
+                    new Claim(JwtRegisteredClaimNames.Email, user.Email!),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // set unique identifier
+                    // new Claim("role", user.Role) // Custom set user role
+                };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSecret));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSecret));
+                var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var token = new JwtSecurityToken(
-                issuer: "OmnicartAPI",
-                audience: "Omnicart_WEB_APP",
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(_jwtLifespan),
-                signingCredentials: credentials
-            );
+                var token = new JwtSecurityToken(
+                    issuer: "OmnicartAPI",
+                    audience: "Omnicart_WEB_APP",
+                    claims: claims,
+                    expires: DateTime.Now.AddMinutes(_jwtLifespan),
+                    signingCredentials: credentials
+                );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+                // Wrap in Task.FromResult for async compatibility
+                return await Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));
+            }
+            catch (Exception ex)
+            {
+                //return string.Empty;
+                throw new Exception($"Failed to generate JWT token: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -222,8 +244,11 @@ namespace omnicart_api.Services
                 var userInfo = user.Id + DateTime.UtcNow.ToString();
                 var token = Convert.ToBase64String(tokenData) + Convert.ToBase64String(Encoding.UTF8.GetBytes(userInfo));
 
-                user.PasswordReset.Token = token;
-                user.PasswordReset.ExpiryAt = DateTime.UtcNow.AddHours(1); // valid for 1 hour
+                user.PasswordReset ??= new PasswordReset
+                {
+                    Token = token,
+                    ExpiryAt = DateTime.UtcNow.AddHours(1),
+                };
 
                 await _userService.UpdateUserAsync(user.Id!, user);
 
@@ -239,7 +264,7 @@ namespace omnicart_api.Services
         /// <returns>True if the token is valid; otherwise, false</returns>
         private bool VerifyPasswordResetToken(User user, string token)
         {
-            return (user.PasswordReset.Token == token) && (user.PasswordReset.ExpiryAt > DateTime.UtcNow);
+            return (user.PasswordReset?.Token == token) && (user.PasswordReset?.ExpiryAt > DateTime.UtcNow);
         }
 
     }

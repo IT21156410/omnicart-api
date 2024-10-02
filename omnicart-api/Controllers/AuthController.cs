@@ -34,14 +34,14 @@ namespace omnicart_api.Controllers
         /// <param name="loginRequest">The login credentials</param>
         /// <returns>JWT token if authentication is successful</returns>
         [HttpPost("login")]
-        public async Task<ActionResult<AppResponse<string>>> Login(LoginRequest loginRequest)
+        public async Task<ActionResult<AppResponse<AuthResponse>>> Login(LoginRequest loginRequest)
         {
             try
             {
-                var token = await _authService.LoginAsync(loginRequest);
-                if (token == null)
+                var loggedUserData = await _authService.LoginAsync(loginRequest);
+                if (loggedUserData == null)
                 {
-                    return Unauthorized(new AppResponse<string>
+                    return Unauthorized(new AppResponse<AuthResponse>
                     {
                         Success = false,
                         Message = "Invalid credentials",
@@ -49,16 +49,16 @@ namespace omnicart_api.Controllers
                     });
                 }
 
-                return Ok(new AppResponse<string>
+                return Ok(new AppResponse<AuthResponse>
                 {
                     Success = true,
-                    Data = token,
+                    Data = loggedUserData,
                     Message = "Login successful"
                 });
             }
             catch (System.Exception ex)
             {
-                var response = new AppResponse<string>
+                var response = new AppResponse<AuthResponse>
                 {
                     Success = false,
                     Message = "An error occurred during login",
@@ -76,15 +76,15 @@ namespace omnicart_api.Controllers
         /// <param name="registerRequest">The registration details of the new user</param>
         /// <returns>Details of the registered user if successful</returns>
         [HttpPost("register")]
-        public async Task<ActionResult<AppResponse<User>>> Register(RegisterRequest registerRequest)
+        public async Task<ActionResult<AppResponse<AuthResponse>>> Register(RegisterRequest registerRequest)
         {
             try
             {
-                var newUser = await _authService.RegisterAsync(registerRequest);
+                var newUserData = await _authService.RegisterAsync(registerRequest);
 
-                if (newUser == null)
+                if (newUserData == null)
                 {
-                    return BadRequest(new AppResponse<User>
+                    return BadRequest(new AppResponse<AuthResponse>
                     {
                         Success = false,
                         Message = "Email is already in use.",
@@ -92,16 +92,16 @@ namespace omnicart_api.Controllers
                     });
                 }
 
-                return Ok(new AppResponse<User>
+                return Ok(new AppResponse<AuthResponse>
                 {
                     Success = true,
-                    Data = newUser,
+                    Data = newUserData,
                     Message = "Registration successful"
                 });
             }
             catch (System.Exception ex)
             {
-                var response = new AppResponse<User>
+                var response = new AppResponse<AuthResponse>
                 {
                     Success = false,
                     Message = "An error occurred during registration",

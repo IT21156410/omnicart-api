@@ -22,6 +22,18 @@ namespace omnicart_api.Models
         public string Role { get; set; }
     }
 
+    public class AuthResponse
+    {
+        public User User { get; set; }
+        public string Token { get; set; }
+
+        public AuthResponse(User user, string token)
+        {
+            User = user;
+            Token = token;
+        }
+    }
+
     public class ForgotPasswordRequest
     {
         public string Email { get; set; }

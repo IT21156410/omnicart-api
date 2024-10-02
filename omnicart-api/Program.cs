@@ -32,7 +32,9 @@ builder.Services.AddCors(options =>
 builder.Services.Configure<MongoDbSettings>(
     builder.Configuration.GetSection("MongoDbSettings"));
 
+builder.Services.AddSingleton<AuthService>();
 builder.Services.AddSingleton<UserService>();
+builder.Services.AddSingleton<EmailService>();
 builder.Services.AddSingleton<ProductService>();
 
 builder.Services.AddControllers();
