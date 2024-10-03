@@ -322,10 +322,7 @@ namespace omnicart_api.Services
                 Code = code.ToString(),
                 ExpiryAt = DateTime.UtcNow.AddMinutes(5), // token valid for 5 minutes
                 IsVerified = false
-            };
-
-                // Convert the random number to a uint, then ensure it's in the 6-digit range
-             uint code = BitConverter.ToUInt32(randomNumber, 0) % 900000 + 100000;
+            }; 
 
             await _userService.UpdateUserAsync(user.Id!, user);
 

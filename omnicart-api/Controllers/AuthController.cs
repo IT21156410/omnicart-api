@@ -188,18 +188,7 @@ namespace omnicart_api.Controllers
                 return StatusCode(500, response);
             }
         }
-
-        [HttpPost("verify-2fa")]
-        public async Task<ActionResult<AppResponse<TwoFAVerify>>> Verify2FT([FromBody] object code)
-        {
-            // TODO: Implement this
-            return Ok(new AppResponse<TwoFAVerify>
-            {
-                Success = true,
-                Data = null,
-                Message = "2FT successful"
-            });
-        }
+         
 
         /// <summary>
         /// Handles POST requests for password reset via email.
