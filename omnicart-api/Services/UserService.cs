@@ -45,6 +45,14 @@ namespace omnicart_api.Services
             await _userCollection.Find(user => user.Id == id).FirstOrDefaultAsync();
 
         /// <summary>
+        /// Get user for a given email
+        /// </summary>
+        /// <param name="email">Email of the user</param>
+        /// <returns>User?</returns>
+        public async Task<User?> FindByEmailAsync(string email) =>
+            await _userCollection.Find(user => user.Email == email).FirstOrDefaultAsync();
+
+        /// <summary>
         /// Inserts a new user document
         /// </summary>
         /// <param name="newUser">New User Object</param>

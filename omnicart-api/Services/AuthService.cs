@@ -18,6 +18,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using Newtonsoft.Json.Linq;
 
 namespace omnicart_api.Services
 {
@@ -65,7 +66,7 @@ namespace omnicart_api.Services
             var token = await GenerateJwtTokenAsync(loginUser);
             await Generate2FAVerifyTokenAsync(loginUser);
 
-            return new AuthResponse(loginUser, token);
+            return new AuthResponse(new UserDto(loginUser), token);
         }
 
         /// <summary>
@@ -94,11 +95,11 @@ namespace omnicart_api.Services
             User newUser = await _userCollection.Find(user => user.Email == registerRequest.Email).FirstOrDefaultAsync();
 
             var token = await GenerateJwtTokenAsync(newUser);
-            newUser.Password = "";
-
             await Generate2FAVerifyTokenAsync(newUser);
 
-            return new AuthResponse(newUser, token);
+            newUser.Password = "";
+
+            return new AuthResponse(new UserDto(newUser), token);
         }
 
         /// <summary>
@@ -116,8 +117,8 @@ namespace omnicart_api.Services
 
                 var resetToken = await GeneratePasswordResetTokenAsync(user);
 
-                var emailService = new EmailService();
-                await emailService.SendPasswordResetAsync(user.Email, resetToken);
+                //var emailService = new EmailService();
+                //await emailService.SendPasswordResetAsync(user.Email, resetToken);
 
                 return true;
             }
@@ -136,14 +137,21 @@ namespace omnicart_api.Services
         {
             var resetPswUser = await _userCollection.Find(user => user.Email == resetRequest.Email).FirstOrDefaultAsync();
 
-            if (resetPswUser == null || !VerifyPasswordResetToken(resetPswUser, resetRequest.Token))
+            if (resetPswUser == null || resetPswUser.PasswordReset == null)
+            {
+                return false;
+            }
+
+            if (!(resetPswUser.PasswordReset.Token == resetRequest.Token) && (resetPswUser.PasswordReset.ExpiryAt > DateTime.UtcNow))
             {
                 return false;
             }
 
             resetPswUser.Password = HashPassword(resetRequest.NewPassword);
+            resetPswUser.PasswordReset.IsReseted = true;
+            resetPswUser.PasswordReset.ExpiryAt = DateTime.UtcNow;
 
-            await _userCollection.ReplaceOneAsync(user => user.Id == user.Id, resetPswUser);
+            await _userCollection.ReplaceOneAsync(user => user.Id == resetPswUser.Id, resetPswUser);
 
             return true;
         }
@@ -169,6 +177,32 @@ namespace omnicart_api.Services
             return true;
         }
 
+        public async Task<bool> VerifyTwoFactorAsync(VerifyTwoFactorRequest verifyTwoFactorRequest)
+        {
+            var user2AF = await _userCollection.Find(user => user.Email == verifyTwoFactorRequest.Email).FirstOrDefaultAsync();
+
+            if (user2AF == null || user2AF.TwoFAVerify == null)
+            {
+                return false;
+            }
+
+            if (user2AF.TwoFAVerify.Code != verifyTwoFactorRequest.Code)
+            {
+                return false;
+            }
+
+            if (DateTime.UtcNow > user2AF.TwoFAVerify.ExpiryAt)
+            {
+                return false;
+            }
+
+            user2AF.TwoFAVerify.IsVerified = true;
+            user2AF.TwoFAVerify.ExpiryAt = DateTime.UtcNow;
+
+            await _userCollection.ReplaceOneAsync(user => user.Id == user2AF.Id, user2AF);
+
+            return true;
+        }
 
 
 
@@ -179,7 +213,7 @@ namespace omnicart_api.Services
         /// </summary>
         /// <param name="password">The plain-text password to be hashed</param>
         /// <returns>The hashed password as a Base64-encoded string</returns>
-        private string HashPassword(string password)
+        private static string HashPassword(string password)
         {
             using var sha256 = SHA256.Create();
             var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
@@ -192,7 +226,7 @@ namespace omnicart_api.Services
         /// <param name="password">The plain-text password entered by the user</param>
         /// <param name="storedHash">The previously stored hashed password</param>
         /// <returns>True if the password matches the stored hash, otherwise false</returns>
-        private bool VerifyPassword(string password, string storedHash)
+        private static bool VerifyPassword(string password, string storedHash)
         {
             var hashedInput = HashPassword(password);
             return hashedInput == storedHash;
@@ -245,24 +279,28 @@ namespace omnicart_api.Services
         /// <returns>The generated token as a string</returns>
         private async Task<string> GeneratePasswordResetTokenAsync(User user)
         {
-            using (var rng = RandomNumberGenerator.Create())
+            using var rng = RandomNumberGenerator.Create();
+            var tokenData = new byte[32];
+            rng.GetBytes(tokenData);
+
+            var userInfo = user.Id + DateTime.UtcNow.ToString();
+            var combinedData = Convert.ToBase64String(tokenData) + Convert.ToBase64String(Encoding.UTF8.GetBytes(userInfo));
+
+            // Make the token URL-safe
+            var urlFriendlyToken = combinedData
+                .Replace("+", "-")
+                .Replace("/", "_")
+                .Replace("=", "");
+
+            user.PasswordReset = new PasswordReset
             {
-                var tokenData = new byte[32];
-                rng.GetBytes(tokenData);
+                Token = urlFriendlyToken,
+                ExpiryAt = DateTime.UtcNow.AddHours(1),
+            };
 
-                var userInfo = user.Id + DateTime.UtcNow.ToString();
-                var token = Convert.ToBase64String(tokenData) + Convert.ToBase64String(Encoding.UTF8.GetBytes(userInfo));
+            await _userService.UpdateUserAsync(user.Id!, user);
 
-                user.PasswordReset ??= new PasswordReset
-                {
-                    Token = token,
-                    ExpiryAt = DateTime.UtcNow.AddHours(1),
-                };
-
-                await _userService.UpdateUserAsync(user.Id!, user);
-
-                return token;
-            }
+            return urlFriendlyToken;
         }
 
         /// <summary>
@@ -270,26 +308,28 @@ namespace omnicart_api.Services
         /// </summary>
         /// <param name="user">The user object for whom the token is being generated</param>
         /// <returns>The generated token as a string</returns>
-        private async Task<string> Generate2FAVerifyTokenAsync(User user)
+        public async Task<string> Generate2FAVerifyTokenAsync(User user)
         {
-            using (var rng = RandomNumberGenerator.Create())
+            using var rng = RandomNumberGenerator.Create();
+            byte[] randomNumber = new byte[4];
+            rng.GetBytes(randomNumber);
+
+            // Convert the random number to a uint, then ensure it's in the 6-digit range
+            uint code = BitConverter.ToUInt32(randomNumber, 0) % 900000 + 100000;
+
+            user.TwoFAVerify = new TwoFAVerify
             {
-                byte[] randomNumber = new byte[4];
-                rng.GetBytes(randomNumber);
+                Code = code.ToString(),
+                ExpiryAt = DateTime.UtcNow.AddMinutes(5), // token valid for 5 minutes
+                IsVerified = false
+            };
 
                 // Convert the random number to a uint, then ensure it's in the 6-digit range
-                uint code = BitConverter.ToUInt32(randomNumber, 0) % 900000 + 100000;
+             uint code = BitConverter.ToUInt32(randomNumber, 0) % 900000 + 100000;
 
-                user.TwoFAVerify ??= new TwoFAVerify
-                {
-                    Token = code.ToString(),
-                    ExpiryAt = DateTime.UtcNow.AddMinutes(5), // token valid for 5 minutes
-                };
+            await _userService.UpdateUserAsync(user.Id!, user);
 
-                await _userService.UpdateUserAsync(user.Id!, user);
-
-                return code.ToString();
-            }
+            return code.ToString();
         }
 
         /// <summary>

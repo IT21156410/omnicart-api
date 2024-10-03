@@ -20,15 +20,16 @@ namespace omnicart_api.Models
         public string Email { get; set; }
         public string Password { get; set; }
         public string PasswordConfirmation { get; set; }
-        public string? Role { get; set; }
+        public string Role { get; set; }
+        public string? AdminToken { get; set; }
     }
 
     public class AuthResponse
     {
-        public User User { get; set; }
+        public UserDto User { get; set; }
         public string Token { get; set; }
 
-        public AuthResponse(User user, string token)
+        public AuthResponse(UserDto user, string token)
         {
             User = user;
             Token = token;
@@ -51,6 +52,18 @@ namespace omnicart_api.Models
     {
         public string CurrentPassword { get; set; }
         public string NewPassword { get; set; }
+    }
+
+    public class VerifyTwoFactorRequest
+    {
+        public required string Email { get; set; }
+
+        public required string Code { get; set; }
+    }
+
+    public class SendTwoFactorRequest
+    {
+        public required string Email { get; set; }
     }
 
 }
