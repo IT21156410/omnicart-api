@@ -50,6 +50,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
             ClockSkew = TimeSpan.Zero
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.Response.ContentType = "application/json";
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+
+                var response = new AppResponse<object>
+                {
+                    Success = false,
+                    Message = "Unauthorized",
+                    ErrorCode = 401,
+                    Error = "Invalid or expired JWT token."
+                };
+
+                var jsonResponse = System.Text.Json.JsonSerializer.Serialize(response);
+                await context.Response.WriteAsync(jsonResponse);
+            }
+        };
     });
 
 builder.Services.AddScoped<ValidateModelAttribute>();
