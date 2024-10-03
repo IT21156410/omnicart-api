@@ -27,21 +27,22 @@ namespace omnicart_api.Services
         private readonly string _jwtSecret;
         private readonly int _jwtLifespan;
         private readonly UserService _userService;
-        private readonly IConfiguration _configuration;
+        private readonly IOptions<JwtSettings> _jwtSettings;
 
         /// <summary>
         /// Initializes the AuthService with MongoDB client, database, and users collection.
         /// </summary>
         /// <param name="mongoDbSettings"></param>
-        public AuthService(IOptions<MongoDbSettings> mongoDbSettings, IConfiguration configuration, UserService userService)
+        public AuthService(IOptions<MongoDbSettings> mongoDbSettings, IOptions<JwtSettings> jwtSettings, UserService userService)
         {
             var mongoClient = new MongoClient(mongoDbSettings.Value.ConnectionString);
             var mongoDatabase = mongoClient.GetDatabase(mongoDbSettings.Value.DatabaseName);
             _userCollection = mongoDatabase.GetCollection<User>(mongoDbSettings.Value.UsersCollectionName);
-            _jwtSecret = configuration["jwt:key"]!;
+
             _jwtLifespan = 1440; //minutes
             _userService = userService;
-            _configuration = configuration;
+            _jwtSettings = jwtSettings;
+            _jwtSecret = jwtSettings.Value.Key;
         }
 
         /// <summary>
@@ -207,7 +208,7 @@ namespace omnicart_api.Services
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_configuration["jwt:key"]);
+                var key = Encoding.ASCII.GetBytes(_jwtSettings.Value.Key);
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(new Claim[]
@@ -220,8 +221,8 @@ namespace omnicart_api.Services
                     }),
                     Expires = DateTime.Now.AddMinutes(_jwtLifespan),
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-                    Issuer = _configuration["Jwt:Issuer"],  
-                    Audience = _configuration["Jwt:Audience"]
+                    Issuer = _jwtSettings.Value.Issuer,  
+                    Audience = _jwtSettings.Value.Audience
                 };
 
                 var token = tokenHandler.CreateToken(tokenDescriptor);
