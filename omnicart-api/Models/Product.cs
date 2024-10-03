@@ -23,6 +23,13 @@ namespace omnicart_api.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; } = null!;
 
+        [BsonElement("userId")]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? UserId { get; set; }
+
+        [BsonElement("VendorInfo")]
+        public UserDto? VendorInfo { get; set; } = null;
+
         [BsonElement("name")]
         [Required]
         public string Name { get; set; } = null!;
@@ -127,4 +134,5 @@ namespace omnicart_api.Models
         [Required]
         public int Stock { get; set; }
     }
+  
 }

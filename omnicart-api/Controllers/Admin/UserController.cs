@@ -6,6 +6,7 @@
 // Tutorial         : https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio
 // ***********************************************************************
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using omnicart_api.Models;
@@ -14,11 +15,12 @@ using omnicart_api.Services;
 
 // https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio
 
-namespace omnicart_api.Controllers
+namespace omnicart_api.Controllers.Admin
 {
-    [Route("api/users")]
+    [Route("api/admin/users")]
     [ApiController]
     [ServiceFilter(typeof(ValidateModelAttribute))]
+    [Authorize(Roles = "admin")]
     public class UserController : ControllerBase
     {
         private readonly UserService _userService;
@@ -49,9 +51,9 @@ namespace omnicart_api.Controllers
                     Message = "Users retrieved successfully"
                 };
                 return response;
-                 
+
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 var response = new AppResponse<List<User>>
                 {
@@ -85,7 +87,7 @@ namespace omnicart_api.Controllers
                     Message = "User not found",
                     ErrorCode = 404
                 });
-                
+
             }
 
             return Ok(new AppResponse<User>
@@ -134,7 +136,7 @@ namespace omnicart_api.Controllers
                     ErrorCode = 404
                 });
             }
-             
+
             existingUser.Name = updatedUser.Name;
             existingUser.Email = updatedUser.Email;
             existingUser.Role = updatedUser.Role ?? existingUser.Role;

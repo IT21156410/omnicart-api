@@ -6,6 +6,7 @@
 // ***********************************************************************
 
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using omnicart_api.Models;
 
@@ -34,10 +35,59 @@ namespace omnicart_api.Services
             return await _productCollection.Find(product => product.Id == id).FirstOrDefaultAsync();
         }
 
+        // Get a product by User ID
+        public async Task<List<Product>> GetProductByUserIdAsync(string UserId)
+        {
+            return await _productCollection.Find(product => product.UserId == UserId).ToListAsync();
+        }
+
         // Get all products
         public async Task<List<Product>> GetAllProductsAsync()
         {
-            return await _productCollection.Find(product => true).ToListAsync();
+            var pipeline = new[]
+            {
+                new BsonDocument("$lookup", new BsonDocument
+                {
+                    { "from", "users" },
+                    { "localField", "userId" },
+                    { "foreignField", "_id" },
+                    { "as", "VendorInfo" }
+                }),
+                new BsonDocument("$unwind", new BsonDocument
+                {
+                    { "path", "$VendorInfo" },
+                    { "preserveNullAndEmptyArrays", true }
+                }),
+                new BsonDocument("$project", new BsonDocument
+                {
+                    // Include all product fields by specifying each one or simply by using "1"
+                    { "_id", 1 },
+                    { "userId", 1 },
+                    { "name", 1 },
+                    { "category", 1 },
+                    { "photos", 1 },
+                    { "condition", 1 },
+                    { "status", 1 },
+                    { "description", 1 },
+                    { "stock", 1 },
+                    { "sku", 1 },
+                    { "price", 1 },
+                    { "discount", 1 },
+                    { "productWeight", 1 },
+                    { "width", 1 },
+                    { "height", 1 },
+                    { "length", 1 },
+                    { "shippingFee", 1 },
+
+                    { "VendorInfo._id", 1 },
+                    { "VendorInfo.name", 1 },
+                    { "VendorInfo.email", 1 },
+                    { "VendorInfo.role", 1 }
+                })
+            };
+
+            var result = await _productCollection.Aggregate<Product>(pipeline).ToListAsync();
+            return result;
         }
 
         // Update an existing product

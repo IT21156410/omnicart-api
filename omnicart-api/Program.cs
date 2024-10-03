@@ -5,6 +5,7 @@
 // Description      : APP configurations
 // Tutorial         : https://learn.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-8.0
 //                    https://medium.com/@amund.fremming/integrating-jwt-to-net-8-925c4f60695e
+//                    https://stackoverflow.com/questions/64082588/asp-core-api-custom-unauthorized-body
 // ***********************************************************************
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -53,37 +54,50 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
         options.Events = new JwtBearerEvents
         {
-            OnChallenge = async context =>
+            OnChallenge = context =>
             {
-                context.Response.ContentType = "application/json";
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-
-                var response = new AppResponse<object>
+                context.Response.OnStarting(async () =>
                 {
-                    Success = false,
-                    Message = "Unauthorized",
-                    ErrorCode = 401,
-                    Error = "Invalid or expired JWT token."
-                };
+                    context.Response.ContentType = "application/json";
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
 
-                var jsonResponse = System.Text.Json.JsonSerializer.Serialize(response);
-                await context.Response.WriteAsync(jsonResponse);
+                    var response = new AppResponse<object>
+                    {
+                        Success = false,
+                        Message = "Unauthorized",
+                        ErrorCode = 401,
+                        Error = "You do not have permissions to perform this action."
+                    };
+
+                    var jsonResponse = System.Text.Json.JsonSerializer.Serialize(response);
+                    await context.Response.WriteAsync(jsonResponse);
+                });
+
+                return Task.CompletedTask;
+
             },
             OnForbidden = context =>
             {
-                context.Response.ContentType = "application/json";
-                context.Response.StatusCode = StatusCodes.Status403Forbidden;
-
-                var response = new AppResponse<object>
+                context.Response.OnStarting(async () =>
                 {
-                    Success = false,
-                    Message = "Forbidden",
-                    ErrorCode = 403,
-                    Error = "You do not have permissions to perform this action."
-                };
 
-                var jsonResponse = System.Text.Json.JsonSerializer.Serialize(response);
-                return context.Response.WriteAsync(jsonResponse);
+                    context.Response.ContentType = "application/json";
+                    //context.Response.StatusCode = StatusCodes.Status403Forbidden;
+
+                    var response = new AppResponse<object>
+                    {
+                        Success = false,
+                        Message = "Forbidden",
+                        ErrorCode = 403,
+                        Error = "You do not have permissions to perform this action."
+                    };
+
+                    var jsonResponse = System.Text.Json.JsonSerializer.Serialize(response);
+                    await context.Response.WriteAsync(jsonResponse);
+                });
+
+                return Task.CompletedTask;
+
             }
         };
     });
@@ -109,7 +123,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { Title = "Pappa´s API", Version = "v1" });
+    c.SwaggerDoc("v1", new() { Title = "OmniCart API", Version = "v1" });
 
     // Define the OAuth2.0 scheme that's in use (i.e., Implicit Flow)
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

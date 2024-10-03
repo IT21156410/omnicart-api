@@ -5,6 +5,7 @@
 // Description      : Handle HTTP API requests related to product management. 
 // ***********************************************************************
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -12,10 +13,11 @@ using MongoDB.Bson;
 using omnicart_api.Models;
 using omnicart_api.Requests;
 using omnicart_api.Services;
+using System.Security.Claims;
 
-namespace omnicart_api.Controllers
+namespace omnicart_api.Controllers.Vendor
 {
-    [Route("api/products")]
+    [Route("api/vendor/products")]
     [ApiController]
     [ServiceFilter(typeof(ValidateModelAttribute))]
     public class ProductController : ControllerBase
@@ -27,24 +29,31 @@ namespace omnicart_api.Controllers
             _productService = productService;
         }
 
-        // Get all products
+        // Get all products by vendor id
         [HttpGet]
+        [Authorize(Roles = "vendor")]
         public async Task<ActionResult<AppResponse<List<Product>>>> Get()
         {
-            // TODO: Authorization Check 
-            // if (!User.IsInRole("admin"))
-            //     return Forbid("You do not have permission to view all products");
-            var products = await _productService.GetAllProductsAsync();
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized(new AppResponse<UserDto>
+                {
+                    Success = false,
+                    Message = "User is not authenticated",
+                    ErrorCode = 401
+                });
+            }
+            var products = await _productService.GetProductByUserIdAsync(userId);
             return Ok(new AppResponse<List<Product>> { Success = true, Data = products, Message = "Products retrieved successfully" });
         }
 
         // Create a new product
         [HttpPost]
+        [Authorize(Roles = "vendor")]
         public async Task<ActionResult<AppResponse<Product>>> CreateProduct([FromBody] Product newProduct)
-        {
-            // TODO: Authorization Check
-            // if (!User.IsInRole("vendor"))
-            //     return Forbid(new AppResponse<Product> { Success = false, Message = "You do not have permission to create products" });
+        { 
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
             // Validation
             if (string.IsNullOrWhiteSpace(newProduct.Name))
@@ -68,6 +77,7 @@ namespace omnicart_api.Controllers
                 });
 
             }
+            newProduct.UserId = userId;
 
             await _productService.CreateProductAsync(newProduct);
             return Ok(new AppResponse<Product> { Success = true, Data = newProduct, Message = "Product created successfully" });
@@ -75,11 +85,13 @@ namespace omnicart_api.Controllers
 
         // Get a product by ID
         [HttpGet("{id:length(24)}")]
+        [Authorize(Roles = "vendor")]
         public async Task<ActionResult<AppResponse<Product>>> GetProductById(string id)
         {
             var product = await _productService.GetProductByIdAsync(id);
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
-            if (product == null)
+            if (product == null || product.UserId != userId)
                 return NotFound(new AppResponse<Product> { Success = false, Message = "Product not found" });
 
             return Ok(new AppResponse<Product> { Success = true, Data = product, Message = "Product retrieved successfully" });
@@ -87,15 +99,14 @@ namespace omnicart_api.Controllers
 
         // Update an existing product
         [HttpPut("{id:length(24)}")]
+        [Authorize(Roles = "vendor")]
         public async Task<ActionResult<AppResponse<Product>>> UpdateProduct(string id, [FromBody] Product updatedProduct)
         {
-            // TODO: Authorization Check
-            // if (!User.IsInRole("vendor") && !User.IsInRole("admin"))
-            //     return Forbid(new AppResponse<Product> { Success = false, Message = "You do not have permission to update this product" });
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
             var existingProduct = await _productService.GetProductByIdAsync(id);
 
-            if (existingProduct == null)
+            if (existingProduct == null || existingProduct.UserId != userId)
                 return NotFound(new AppResponse<Product> { Success = false, Message = "Product not found" });
 
             // Validation
@@ -123,15 +134,15 @@ namespace omnicart_api.Controllers
 
         // Delete a product by ID
         [HttpDelete("{id:length(24)}")]
+        [Authorize(Roles = "vendor")]
         public async Task<ActionResult<AppResponse<Product>>> DeleteProduct(string id)
         {
-            // TODO: Authorization Check
-            // if (!User.IsInRole("vendor") && !User.IsInRole("admin"))
-            //     return Forbid(new AppResponse<string> { Success = false, Message = "You do not have permission to delete this product" });
+
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
             var existingProduct = await _productService.GetProductByIdAsync(id);
 
-            if (existingProduct == null)
+            if (existingProduct == null || existingProduct.UserId != userId)
                 return NotFound(new AppResponse<string> { Success = false, Message = "Product not found" });
 
             await _productService.DeleteProductAsync(id);
@@ -140,15 +151,15 @@ namespace omnicart_api.Controllers
 
         // Activate/Deactivate a product
         [HttpPatch("{id:length(24)}/status")]
+        [Authorize(Roles = "vendor")]
         public async Task<ActionResult<AppResponse<Product>>> SetProductStatus(string id, [FromBody] UpdateProductStatusDto status)
         {
-            // TODO: Authorization Check
-            // if (!User.IsInRole("vendor") && !User.IsInRole("admin"))
-            //     return Forbid(new AppResponse<Product> { Success = false, Message = "You do not have permission to change the status of this product" });
+
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
             var existingProduct = await _productService.GetProductByIdAsync(id);
 
-            if (existingProduct == null)
+            if (existingProduct == null || existingProduct.UserId != userId)
                 return NotFound(new AppResponse<Product> { Success = false, Message = "Product not found" });
 
             await _productService.SetProductStatusAsync(id, status.Status);
@@ -160,17 +171,16 @@ namespace omnicart_api.Controllers
 
         // Manage stock (add/remove stock)
         [HttpPatch("{id:length(24)}/stock")]
+        [Authorize(Roles = "vendor")]
         public async Task<ActionResult<AppResponse<Product>>> UpdateStock(string id, [FromBody] UpdateProductStockDto newStock)
         {
-            // TODO: Authorization Check
-            // if (!User.IsInRole("vendor"))
-            //     return Forbid(new AppResponse<Product> { Success = false, Message = "You do not have permission to change the status of this product" });
 
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
             var existingProduct = await _productService.GetProductByIdAsync(id);
 
-            if (existingProduct == null)
+            if (existingProduct == null || existingProduct.UserId != userId)
                 return NotFound(new AppResponse<Product> { Success = false, Message = "Product not found" });
-             
+
             if (newStock.Stock < 0)
                 ModelState.AddModelError(nameof(Product.Stock), "Stock cannot be negative");
 
