@@ -42,7 +42,7 @@ namespace omnicart_api.Controllers
         /// </summary>
         /// <returns>The authenticated user's data</returns>
         [HttpGet("own-user")]
-        [Authorize(Roles = "admin")]
+        [Authorize]
         public async Task<ActionResult<AppResponse<User>>> GetOwnUser()
         {
             try
