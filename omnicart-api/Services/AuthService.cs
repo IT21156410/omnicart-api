@@ -27,19 +27,21 @@ namespace omnicart_api.Services
         private readonly string _jwtSecret;
         private readonly int _jwtLifespan;
         private readonly UserService _userService;
+        private readonly IConfiguration _configuration;
 
         /// <summary>
         /// Initializes the AuthService with MongoDB client, database, and users collection.
         /// </summary>
         /// <param name="mongoDbSettings"></param>
-        public AuthService(IOptions<MongoDbSettings> mongoDbSettings, UserService userService)
+        public AuthService(IOptions<MongoDbSettings> mongoDbSettings, IConfiguration configuration, UserService userService)
         {
             var mongoClient = new MongoClient(mongoDbSettings.Value.ConnectionString);
             var mongoDatabase = mongoClient.GetDatabase(mongoDbSettings.Value.DatabaseName);
             _userCollection = mongoDatabase.GetCollection<User>(mongoDbSettings.Value.UsersCollectionName);
-            _jwtSecret = "OmnicartAPI@jwtSecretIT211699080PRASHANTHAKGMSLIITEADASSIGMENT01C#DOTNETRESRAPI";
+            _jwtSecret = configuration["jwt:key"]!;
             _jwtLifespan = 1440; //minutes
             _userService = userService;
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -204,27 +206,29 @@ namespace omnicart_api.Services
         {
             try
             {
-                var claims = new[]
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(_configuration["jwt:key"]);
+                var tokenDescriptor = new SecurityTokenDescriptor
                 {
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Id!),
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email!),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // set unique identifier
-                    // new Claim("role", user.Role) // Custom set user role
+                    Subject = new ClaimsIdentity(new Claim[]
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, user.Id!),
+                        new Claim(ClaimTypes.Email, user.Email!),
+                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        new Claim(ClaimTypes.Role, user.Role.ToString()),
+                        // Add more claims as needed
+                    }),
+                    Expires = DateTime.Now.AddMinutes(_jwtLifespan),
+                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                    Issuer = _configuration["Jwt:Issuer"],  
+                    Audience = _configuration["Jwt:Audience"]
                 };
 
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSecret));
-                var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                var token = tokenHandler.CreateToken(tokenDescriptor);
 
-                var token = new JwtSecurityToken(
-                    issuer: "OmnicartAPI",
-                    audience: "Omnicart_WEB_APP",
-                    claims: claims,
-                    expires: DateTime.Now.AddMinutes(_jwtLifespan),
-                    signingCredentials: credentials
-                );
-
-                // Wrap in Task.FromResult for async compatibility
-                return await Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));
+                // Wrap in Task.FromResult for async compatibility 
+                return await Task.FromResult(tokenHandler.WriteToken(token));
+                 
             }
             catch (Exception ex)
             {
@@ -273,7 +277,7 @@ namespace omnicart_api.Services
                 rng.GetBytes(randomNumber);
 
                 // Convert the random number to a uint, then ensure it's in the 6-digit range
-                uint code = BitConverter.ToUInt32(randomNumber, 0) % 900000 + 100000; 
+                uint code = BitConverter.ToUInt32(randomNumber, 0) % 900000 + 100000;
 
                 user.TwoFAVerify ??= new TwoFAVerify
                 {

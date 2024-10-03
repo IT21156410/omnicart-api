@@ -6,12 +6,14 @@
 // Tutorial         : https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio
 // ***********************************************************************
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using omnicart_api.Models;
 using omnicart_api.Requests;
 using omnicart_api.Services;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace omnicart_api.Controllers
 {
@@ -38,12 +40,14 @@ namespace omnicart_api.Controllers
         /// </summary>
         /// <returns>The authenticated user's data</returns>
         [HttpGet("own-user")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<AppResponse<User>>> GetOwnUser()
         {
             try
             {
                 // user ID from the JWT token (retrieved from the authenticated context)
-                var userId = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
+                //var userId = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
+                var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
                 if (userId == null)
                 {
@@ -171,6 +175,18 @@ namespace omnicart_api.Controllers
 
                 return StatusCode(500, response);
             }
+        }
+
+        [HttpPost("verify-2fa")]
+        public async Task<ActionResult<AppResponse<TwoFAVerify>>> Verify2FT([FromBody] object code)
+        {
+            // TODO: Implement this
+            return Ok(new AppResponse<TwoFAVerify>
+            {
+                Success = true,
+                Data = null,
+                Message = "2FT successful"
+            });
         }
 
         /// <summary>
