@@ -22,6 +22,7 @@ namespace omnicart_api.Controllers
     {
         private readonly AuthService _authService;
         private readonly UserService _userService;
+        private readonly string _adminToken;
 
         /// <summary>
         /// Initializes the AuthController with AuthService dependency.
@@ -31,6 +32,7 @@ namespace omnicart_api.Controllers
         {
             _authService = authService;
             _userService = userService;
+            _adminToken = "ApilageAdmin@2024*RataAnurata*Mama#OSMA"; // TODO: get from env
         }
 
         /// <summary>
@@ -38,7 +40,7 @@ namespace omnicart_api.Controllers
         /// </summary>
         /// <returns>The authenticated user's data</returns>
         [HttpGet("own-user")]
-        public async Task<ActionResult<AppResponse<User>>> GetOwnUser()
+        public async Task<ActionResult<AppResponse<UserDto>>> GetOwnUser()
         {
             try
             {
@@ -47,7 +49,7 @@ namespace omnicart_api.Controllers
 
                 if (userId == null)
                 {
-                    return Unauthorized(new AppResponse<User>
+                    return Unauthorized(new AppResponse<UserDto>
                     {
                         Success = false,
                         Message = "User is not authenticated",
@@ -59,7 +61,7 @@ namespace omnicart_api.Controllers
 
                 if (user == null)
                 {
-                    return NotFound(new AppResponse<User>
+                    return NotFound(new AppResponse<UserDto>
                     {
                         Success = false,
                         Message = "User not found",
@@ -67,16 +69,16 @@ namespace omnicart_api.Controllers
                     });
                 }
 
-                return Ok(new AppResponse<User>
+                return Ok(new AppResponse<UserDto>
                 {
                     Success = true,
-                    Data = user,
+                    Data = new UserDto(user),
                     Message = "User data retrieved successfully"
                 });
             }
             catch (System.Exception ex)
             {
-                var response = new AppResponse<User>
+                var response = new AppResponse<UserDto>
                 {
                     Success = false,
                     Message = "An error occurred while retrieving user data",
@@ -140,6 +142,16 @@ namespace omnicart_api.Controllers
         {
             try
             {
+                if (registerRequest.Role == "admin" && (registerRequest.AdminToken != null && registerRequest.AdminToken != _adminToken))
+                {
+                    return Unauthorized(new AppResponse<AuthResponse>
+                    {
+                        Success = false,
+                        Message = "Invalid admin token, contact super admin",
+                        ErrorCode = 401
+                    });
+                }
+
                 var newUserData = await _authService.RegisterAsync(registerRequest);
 
                 if (newUserData == null)
@@ -190,7 +202,7 @@ namespace omnicart_api.Controllers
                     {
                         Success = false,
                         Message = "Email not found",
-                        ErrorCode = 404
+                        ErrorCode = 403
                     });
                 }
 
@@ -229,7 +241,7 @@ namespace omnicart_api.Controllers
                     {
                         Success = false,
                         Message = "Invalid token or password reset failed",
-                        ErrorCode = 400
+                        ErrorCode = 401
                     });
                 }
 
@@ -250,7 +262,7 @@ namespace omnicart_api.Controllers
                 });
             }
         }
-
+        
         /// <summary>
         /// Handles POST requests to change the user's password.
         /// </summary>
@@ -268,7 +280,7 @@ namespace omnicart_api.Controllers
                     {
                         Success = false,
                         Message = "Password change failed",
-                        ErrorCode = 400
+                        ErrorCode = 401
                     });
                 }
 
@@ -289,5 +301,98 @@ namespace omnicart_api.Controllers
                 });
             }
         }
+
+        /// <summary>
+        /// Handles POST requests to verify the user's two-factor authentication (2FA) code.
+        /// </summary>
+        /// <param name="verifyTwoFactorRequest">The request object containing the 2FA code and user information</param>
+        /// <returns>Action result indicating success or failure of the 2FA verification</returns>
+        [HttpPost("verify-2fa")]
+        public async Task<ActionResult<AppResponse<string>>> VerifyTwoFactor(VerifyTwoFactorRequest verifyTwoFactorRequest)
+        {
+            try
+            {
+                var isVerified = await _authService.VerifyTwoFactorAsync(verifyTwoFactorRequest);
+                if (!isVerified)
+                {
+                    return BadRequest(new AppResponse<string>
+                    {
+                        Success = false,
+                        Message = "Invalid 2FA code",
+                        ErrorCode = 401
+                    });
+                }
+
+                return Ok(new AppResponse<string>
+                {
+                    Success = true,
+                    Message = "Two factor authentication successful"
+                });
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "An error occurred during 2FA verification",
+                    Error = ex.Message,
+                    ErrorCode = 500
+                });
+            }
+        }
+
+        /// <summary>
+        /// Handles POST requests to send the user's two-factor authentication (2FA) code.
+        /// </summary>
+        /// <param name="sendTwoFactorRequest">The request object containing the user's email</param>
+        /// <returns>Action result indicating success or failure of sending the 2FA code</returns>
+        [HttpPost("send-2fa-verify")]
+        public async Task<ActionResult<AppResponse<string>>> SendTwoFactorVerify(SendTwoFactorRequest sendTwoFactorRequest)
+        {
+            try
+            {
+                var user = await _userService.FindByEmailAsync(sendTwoFactorRequest.Email);
+                if (user == null)
+                {
+                    return NotFound(new AppResponse<string>
+                    {
+                        Success = false,
+                        Message = "User not found",
+                        ErrorCode = 404
+                    });
+                }
+
+                var code = await _authService.Generate2FAVerifyTokenAsync(user);
+                if (code == null)
+                {
+                    return NotFound(new AppResponse<string>
+                    {
+                        Success = false,
+                        Message = "Code not found, try again",
+                        ErrorCode = 403
+                    });
+                }
+
+                //var emailService = new EmailService();
+                //await emailService.SendTwoFactorCodeAsync(user.Email, code);
+
+                return Ok(new AppResponse<string>
+                {
+                    Success = true,
+                    Message = "2FA verification code sent successfully"
+                });
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "An error occurred while sending the 2FA code",
+                    Error = ex.Message,
+                    ErrorCode = 500
+                });
+            }
+        }
+
     }
 }

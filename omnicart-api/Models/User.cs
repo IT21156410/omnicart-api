@@ -44,12 +44,15 @@ namespace omnicart_api.Models
 
         [BsonElement("expiryAt")]
         public required DateTime ExpiryAt { get; set; }
+
+        [BsonElement("isReseted")]
+        public bool IsReseted { get; set; }
     }
 
     public class TwoFAVerify
     {
         [BsonElement("code")]
-        public required string Token { get; set; }
+        public required string Code { get; set; }
 
         [BsonElement("expiryAt")]
         public required DateTime ExpiryAt { get; set; }
@@ -57,6 +60,23 @@ namespace omnicart_api.Models
         [BsonElement("isVerified")]
         public bool IsVerified { get; set; }
     }
+
+    public class UserDto
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Role { get; set; }
+
+        public UserDto(User user)
+        {
+            Id = user.Id!;
+            Name = user.Name;
+            Email = user.Email;
+            Role = user.Role;
+        }
+    }
+
 
     public class UpdateUserDto
     {
