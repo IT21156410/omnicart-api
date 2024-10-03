@@ -68,6 +68,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
                 var jsonResponse = System.Text.Json.JsonSerializer.Serialize(response);
                 await context.Response.WriteAsync(jsonResponse);
+            },
+            OnForbidden = context =>
+            {
+                context.Response.ContentType = "application/json";
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+
+                var response = new AppResponse<object>
+                {
+                    Success = false,
+                    Message = "Forbidden",
+                    ErrorCode = 403,
+                    Error = "You do not have permissions to perform this action."
+                };
+
+                var jsonResponse = System.Text.Json.JsonSerializer.Serialize(response);
+                return context.Response.WriteAsync(jsonResponse);
             }
         };
     });
