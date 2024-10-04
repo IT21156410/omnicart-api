@@ -49,11 +49,10 @@ namespace omnicart_api.Controllers.Admin
         [Authorize(Roles = "admin")]
         public async Task<ActionResult<AppResponse<Product>>> SetProductStatus(string id, [FromBody] UpdateProductStatusDto status)
         {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
+           
             var existingProduct = await _productService.GetProductByIdAsync(id);
 
-            if (existingProduct == null || existingProduct.UserId != userId)
+            if (existingProduct == null)
                 return NotFound(new AppResponse<Product> { Success = false, Message = "Product not found" });
   
             await _productService.SetProductStatusAsync(id, status.Status);

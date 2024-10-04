@@ -139,7 +139,7 @@ namespace omnicart_api.Controllers.Admin
 
             existingUser.Name = updatedUser.Name;
             existingUser.Email = updatedUser.Email;
-            existingUser.Role = updatedUser.Role ?? existingUser.Role;
+            existingUser.Role = updatedUser.Role;
             existingUser.Password = existingUser.Password;
 
             await _userService.UpdateUserAsync(id, existingUser);

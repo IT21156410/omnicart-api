@@ -66,7 +66,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                         Success = false,
                         Message = "Unauthorized",
                         ErrorCode = 401,
-                        Error = "You do not have permissions to perform this action."
+                        Error = "Please login first."
                     };
 
                     var jsonResponse = System.Text.Json.JsonSerializer.Serialize(response);
@@ -116,6 +116,7 @@ builder.Services.AddSingleton<AuthService>();
 builder.Services.AddSingleton<UserService>();
 builder.Services.AddSingleton<EmailService>();
 builder.Services.AddSingleton<ProductService>();
+builder.Services.AddSingleton<CategoryService>();
 
 
 builder.Services.AddControllers();

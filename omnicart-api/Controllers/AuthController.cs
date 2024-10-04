@@ -146,7 +146,7 @@ namespace omnicart_api.Controllers
         {
             try
             {
-                if (registerRequest.Role == "admin" && (registerRequest.AdminToken != null && registerRequest.AdminToken != _adminToken))
+                if (registerRequest.Role == Role.admin && (registerRequest.AdminToken != null && registerRequest.AdminToken != _adminToken))
                 {
                     return Unauthorized(new AppResponse<AuthResponse>
                     {

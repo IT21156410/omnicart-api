@@ -8,6 +8,10 @@
 
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 
 namespace omnicart_api.Models
@@ -28,7 +32,10 @@ namespace omnicart_api.Models
         public required string Password { get; set; }
 
         [BsonElement("role")]
-        public required string Role { get; set; }
+        [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
+        [JsonConverter(typeof(JsonStringEnumConverter))] // Serialize enum as string in JSON response
+        [Required]
+        public required Role Role { get; set; } = Role.customer;
 
         [BsonElement("passwordReset")]
         public PasswordReset? PasswordReset { get; set; }
@@ -74,7 +81,9 @@ namespace omnicart_api.Models
         public string Email { get; set; }
 
         [BsonElement("role")]
-        public string Role { get; set; }
+        [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
+        [JsonConverter(typeof(JsonStringEnumConverter))] // Serialize enum as string in JSON response
+        public Role Role { get; set; } = Role.customer;
 
         public UserDto(User user)
         {
@@ -88,9 +97,30 @@ namespace omnicart_api.Models
 
     public class UpdateUserDto
     {
-        public required string Name { get; set; } 
-        public required string Email { get; set; }  
-        public string? Role { get; set; }  
- 
+        public required string Name { get; set; }
+        public required string Email { get; set; }
+
+        [BsonElement("role")]
+        [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
+        [JsonConverter(typeof(JsonStringEnumConverter))] // Serialize enum as string in JSON response
+        [Required]
+        public required Role Role { get; set; } = Role.customer;
+
+    }
+
+    public enum Role
+    {
+        [EnumMember(Value = "admin")]
+        admin,
+
+        [EnumMember(Value = "vendor")]
+        vendor,
+
+        [EnumMember(Value = "csr")]
+        csr,
+
+        [EnumMember(Value = "customer")]
+        customer,
+
     }
 }

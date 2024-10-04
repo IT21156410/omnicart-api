@@ -53,9 +53,21 @@ namespace omnicart_api.Services
                     { "foreignField", "_id" },
                     { "as", "VendorInfo" }
                 }),
+                new BsonDocument("$lookup", new BsonDocument
+                {
+                    { "from", "categories" },
+                    { "localField", "categoryId" },
+                    { "foreignField", "_id" },
+                    { "as", "category" }
+                }),
                 new BsonDocument("$unwind", new BsonDocument
                 {
                     { "path", "$VendorInfo" },
+                    { "preserveNullAndEmptyArrays", true }
+                }),
+                new BsonDocument("$unwind", new BsonDocument
+                {
+                    { "path", "$category" },
                     { "preserveNullAndEmptyArrays", true }
                 }),
                 new BsonDocument("$project", new BsonDocument
@@ -64,7 +76,7 @@ namespace omnicart_api.Services
                     { "_id", 1 },
                     { "userId", 1 },
                     { "name", 1 },
-                    { "category", 1 },
+                    { "categoryId", 1 },
                     { "photos", 1 },
                     { "condition", 1 },
                     { "status", 1 },
@@ -82,7 +94,12 @@ namespace omnicart_api.Services
                     { "VendorInfo._id", 1 },
                     { "VendorInfo.name", 1 },
                     { "VendorInfo.email", 1 },
-                    { "VendorInfo.role", 1 }
+                    { "VendorInfo.role", 1 },
+
+                    { "category._id", 1 },
+                    { "category.name", 1 },
+                    { "category.isActive", 1 },
+                    { "category.image", 1 },
                 })
             };
 
@@ -96,7 +113,7 @@ namespace omnicart_api.Services
             var filter = Builders<Product>.Filter.Eq(p => p.Id, id);
             var update = Builders<Product>.Update
                 .Set(p => p.Name, updatedProduct.Name)
-                .Set(p => p.Category, updatedProduct.Category)
+                .Set(p => p.CategoryId, updatedProduct.CategoryId)
                 .Set(p => p.Photos, updatedProduct.Photos)
                 .Set(p => p.Condition, updatedProduct.Condition)
                 .Set(p => p.Status, updatedProduct.Status)

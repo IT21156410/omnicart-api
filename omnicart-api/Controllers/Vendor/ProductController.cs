@@ -56,7 +56,7 @@ namespace omnicart_api.Controllers.Vendor
             // Validation
             if (string.IsNullOrWhiteSpace(newProduct.Name))
                 ModelState.AddModelError(nameof(Product.Name), "Product name is required");
-            if (string.IsNullOrWhiteSpace(newProduct.Category))
+            if (string.IsNullOrWhiteSpace(newProduct.CategoryId))
                 ModelState.AddModelError(nameof(Product.Category), "Product category is required");
             if (newProduct.Price <= 0)
                 ModelState.AddModelError(nameof(Product.Price), "Product price must be greater than zero");

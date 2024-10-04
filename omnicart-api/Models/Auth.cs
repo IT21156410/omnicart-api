@@ -6,6 +6,10 @@
 // Tutorial         : https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio
 // ***********************************************************************
 
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson;
+using System.Text.Json.Serialization;
+
 namespace omnicart_api.Models
 {
     public class LoginRequest
@@ -20,7 +24,12 @@ namespace omnicart_api.Models
         public string Email { get; set; }
         public string Password { get; set; }
         public string PasswordConfirmation { get; set; }
-        public string Role { get; set; }
+
+        [BsonElement("role")]
+        [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
+        [JsonConverter(typeof(JsonStringEnumConverter))] // Serialize enum as string in JSON response
+
+        public Role Role { get; set; } = Role.customer;
         public string? AdminToken { get; set; }
     }
 
