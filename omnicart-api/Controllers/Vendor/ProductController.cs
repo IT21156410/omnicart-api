@@ -2,18 +2,15 @@
 // APP NAME         : OmnicartAPI
 // Author           : Fonseka M.M.N.H
 // Student ID       : IT21156410
-// Description      : Handle HTTP API requests related to product management. 
+// Description      : Handle HTTP API requests related to vendor product management. 
 // ***********************************************************************
 
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using MongoDB.Bson;
 using omnicart_api.Models;
 using omnicart_api.Requests;
 using omnicart_api.Services;
-using System.Security.Claims;
 
 namespace omnicart_api.Controllers.Vendor
 {
@@ -44,6 +41,7 @@ namespace omnicart_api.Controllers.Vendor
                     ErrorCode = 401
                 });
             }
+
             var products = await _productService.GetProductByUserIdAsync(userId);
             return Ok(new AppResponse<List<Product>> { Success = true, Data = products, Message = "Products retrieved successfully" });
         }
@@ -52,7 +50,7 @@ namespace omnicart_api.Controllers.Vendor
         [HttpPost]
         [Authorize(Roles = "vendor")]
         public async Task<ActionResult<AppResponse<Product>>> CreateProduct([FromBody] Product newProduct)
-        { 
+        {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
             // Validation
@@ -75,8 +73,8 @@ namespace omnicart_api.Controllers.Vendor
                     ErrorCode = 422,
                     ErrorData = UnprocessableEntity(ModelState)
                 });
-
             }
+
             newProduct.UserId = userId;
 
             await _productService.CreateProductAsync(newProduct);
@@ -125,7 +123,6 @@ namespace omnicart_api.Controllers.Vendor
                     ErrorCode = 422,
                     ErrorData = UnprocessableEntity(ModelState)
                 });
-
             }
 
             await _productService.UpdateProductAsync(id, updatedProduct);
@@ -137,7 +134,6 @@ namespace omnicart_api.Controllers.Vendor
         [Authorize(Roles = "vendor")]
         public async Task<ActionResult<AppResponse<Product>>> DeleteProduct(string id)
         {
-
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
             var existingProduct = await _productService.GetProductByIdAsync(id);
@@ -149,32 +145,11 @@ namespace omnicart_api.Controllers.Vendor
             return Ok(new AppResponse<Product> { Success = true, Data = existingProduct, Message = "Product deleted successfully" });
         }
 
-        // Activate/Deactivate a product
-        [HttpPatch("{id:length(24)}/status")]
-        [Authorize(Roles = "vendor")]
-        public async Task<ActionResult<AppResponse<Product>>> SetProductStatus(string id, [FromBody] UpdateProductStatusDto status)
-        {
-
-            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
-            var existingProduct = await _productService.GetProductByIdAsync(id);
-
-            if (existingProduct == null || existingProduct.UserId != userId)
-                return NotFound(new AppResponse<Product> { Success = false, Message = "Product not found" });
-
-            await _productService.SetProductStatusAsync(id, status.Status);
-
-            existingProduct.Status = status.Status;
-
-            return Ok(new AppResponse<Product> { Success = true, Data = existingProduct, Message = $"Product status updated to {status.Status}" });
-        }
-
         // Manage stock (add/remove stock)
         [HttpPatch("{id:length(24)}/stock")]
         [Authorize(Roles = "vendor")]
         public async Task<ActionResult<AppResponse<Product>>> UpdateStock(string id, [FromBody] UpdateProductStockDto newStock)
         {
-
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
             var existingProduct = await _productService.GetProductByIdAsync(id);
 
@@ -194,7 +169,6 @@ namespace omnicart_api.Controllers.Vendor
                     ErrorCode = 422,
                     ErrorData = UnprocessableEntity(ModelState)
                 });
-
             }
 
             await _productService.UpdateStockAsync(id, newStock.Stock);
