@@ -32,15 +32,15 @@ namespace omnicart_api.Models
 
         [BsonElement("categoryId")]
         [BsonRepresentation(BsonType.ObjectId)]
+        [Required]
         public string? CategoryId { get; set; }
-        
+
         [BsonElement("name")]
         [Required]
         public string Name { get; set; } = null!;
 
         [BsonElement("category")]
-        [Required]
-        public Category Category { get; set; } = null!;
+        public Category? Category { get; set; } = null!;
 
         [BsonElement("photos")]
         public List<string> Photos { get; set; } = [];
@@ -138,5 +138,5 @@ namespace omnicart_api.Models
         [Required]
         public int Stock { get; set; }
     }
-  
+
 }

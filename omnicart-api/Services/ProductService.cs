@@ -38,7 +38,31 @@ namespace omnicart_api.Services
         // Get a product by User ID
         public async Task<List<Product>> GetProductByUserIdAsync(string UserId)
         {
-            return await _productCollection.Find(product => product.UserId == UserId).ToListAsync();
+            var pipeline = new[]
+            {
+               
+                new BsonDocument("$lookup", new BsonDocument
+                {
+                    { "from", "categories" },
+                    { "localField", "categoryId" },
+                    { "foreignField", "_id" },
+                    { "as", "category" }
+                }),
+
+                 new BsonDocument("$match", new BsonDocument
+                {
+                    { "userId",  ObjectId.Parse(UserId) }
+                }),
+
+
+                new BsonDocument("$unwind", new BsonDocument
+                {
+                    { "path", "$category" },
+                    { "preserveNullAndEmptyArrays", true }
+                }),
+            };
+
+            return await _productCollection.Aggregate<Product>(pipeline).ToListAsync();
         }
 
         // Get all products

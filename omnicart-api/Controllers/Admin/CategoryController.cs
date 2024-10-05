@@ -6,7 +6,7 @@ using omnicart_api.Services;
 
 namespace omnicart_api.Controllers.Admin;
 
-[Route("api/admin/products/categories")]
+[Route("api/admin/categories")]
 [ApiController]
 [ServiceFilter(typeof(ValidateModelAttribute))]
 [Authorize(Roles = "admin")]
@@ -23,38 +23,6 @@ public class CategoryController : ControllerBase
         _categoryService = categoryService;
     }
 
-    /// <summary>
-    /// Handles GET requests to retrieve all categories
-    /// </summary>
-    /// <returns></returns>
-    [HttpGet]
-    public async Task<ActionResult<AppResponse<List<Category>>>> Get()
-    {
-        try
-        {
-            var categories = await _categoryService.GetCategoriesAsync();
-            var response = new AppResponse<List<Category>>
-            {
-                Success = true,
-                Data = categories,
-                Message = "Categories retrieved successfully"
-            };
-            return response;
-        }
-        catch (Exception ex)
-        {
-            var response = new AppResponse<List<Category>>
-            {
-                Success = false,
-                Data = [],
-                Message = "An error occurred while retrieving categories",
-                Error = ex.Message,
-                ErrorCode = 500
-            };
-
-            return StatusCode(500, response);
-        }
-    }
 
 
     /// <summary>
