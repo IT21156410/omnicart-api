@@ -1,5 +1,4 @@
-﻿
-// ***********************************************************************
+﻿// ***********************************************************************
 // APP NAME         : OmnicartAPI
 // Author           : Fonseka M.M.N.H
 // Student ID       : IT21156410
@@ -89,5 +88,12 @@ namespace omnicart_api.Services
         /// <returns></returns>
         public async Task DeleteUserAsync(string id) =>
             await _userCollection.DeleteOneAsync(user => user.Id == id);
+
+        public async Task<UpdateResult> SetUserStatusAsync(string id, bool newStatus)
+        {
+            var filter = Builders<User>.Filter.Eq(p => p.Id, id);
+            var update = Builders<User>.Update.Set(p => p.IsActive, newStatus);
+            return await _userCollection.UpdateOneAsync(filter, update);
+        }
     }
 }

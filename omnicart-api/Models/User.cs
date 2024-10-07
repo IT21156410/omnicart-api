@@ -22,50 +22,41 @@ namespace omnicart_api.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
 
-        [BsonElement("name")]
-        public required string Name { get; set; }
+        [BsonElement("name")] public required string Name { get; set; }
 
-        [BsonElement("email")]
-        public required string Email { get; set; }
+        [BsonElement("email")] public required string Email { get; set; }
 
-        [BsonElement("password")]
-        public required string Password { get; set; }
+        [BsonElement("password")] public required string Password { get; set; }
 
         [BsonElement("role")]
-        [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
+        [BsonRepresentation(BsonType.String)] // Store the enum as a string in the database
         [JsonConverter(typeof(JsonStringEnumConverter))] // Serialize enum as string in JSON response
         [Required]
         public required Role Role { get; set; } = Role.customer;
 
-        [BsonElement("passwordReset")]
-        public PasswordReset? PasswordReset { get; set; }
+        [BsonElement("passwordReset")] public PasswordReset? PasswordReset { get; set; }
 
-        [BsonElement("twoFAVerify")]
-        public TwoFAVerify? TwoFAVerify { get; set; }
+        [BsonElement("twoFAVerify")] public TwoFAVerify? TwoFAVerify { get; set; }
+
+        [BsonElement("isActive")] public bool IsActive { get; set; } = false;
     }
 
     public class PasswordReset
     {
-        [BsonElement("token")]
-        public required string Token { get; set; }
+        [BsonElement("token")] public required string Token { get; set; }
 
-        [BsonElement("expiryAt")]
-        public required DateTime ExpiryAt { get; set; }
+        [BsonElement("expiryAt")] public required DateTime ExpiryAt { get; set; }
 
-        [BsonElement("isReseted")]
-        public bool IsReseted { get; set; }
+        [BsonElement("isReseted")] public bool IsReseted { get; set; }
     }
 
     public class TwoFAVerify
     {
-        [BsonElement("code")]
-        public required string Code { get; set; }
+        [BsonElement("code")] public required string Code { get; set; }
 
-        [BsonElement("expiryAt")]
-        public required DateTime ExpiryAt { get; set; }
+        [BsonElement("expiryAt")] public required DateTime ExpiryAt { get; set; }
 
-        [BsonElement("isVerified")]
-        public bool IsVerified { get; set; }
+        [BsonElement("isVerified")] public bool IsVerified { get; set; }
     }
 
     public class UserDto
@@ -74,14 +65,12 @@ namespace omnicart_api.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
 
-        [BsonElement("name")]
-        public string Name { get; set; }
+        [BsonElement("name")] public string Name { get; set; }
 
-        [BsonElement("email")]
-        public string Email { get; set; }
+        [BsonElement("email")] public string Email { get; set; }
 
         [BsonElement("role")]
-        [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
+        [BsonRepresentation(BsonType.String)] // Store the enum as a string in the database
         [JsonConverter(typeof(JsonStringEnumConverter))] // Serialize enum as string in JSON response
         public Role Role { get; set; } = Role.customer;
 
@@ -100,17 +89,13 @@ namespace omnicart_api.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
 
-        [Required]
-        public string Name { get; set; } = null!;
+        [Required] public string Name { get; set; } = null!;
 
-        [Required]
-        public string Email { get; set; } = null!;
+        [Required] public string Email { get; set; } = null!;
 
-        [Required]
-        public string Password { get; set; } = null!;
+        [Required] public string Password { get; set; } = null!;
 
-        [Required]
-        public Role Role { get; set; } = Role.customer;
+        [Required] public Role Role { get; set; } = Role.customer;
     }
 
     public class UpdateUserDto
@@ -119,26 +104,27 @@ namespace omnicart_api.Models
         public required string Email { get; set; }
 
         [BsonElement("role")]
-        [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
+        [BsonRepresentation(BsonType.String)] // Store the enum as a string in the database
         [JsonConverter(typeof(JsonStringEnumConverter))] // Serialize enum as string in JSON response
         [Required]
         public required Role Role { get; set; } = Role.customer;
+    }
 
+    public class UpdateUserStatusDto
+    {
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [Required]
+        [BsonElement("isActive")] public bool IsActive { get; set; } = false;
     }
 
     public enum Role
     {
-        [EnumMember(Value = "admin")]
-        admin,
+        [EnumMember(Value = "admin")] admin,
 
-        [EnumMember(Value = "vendor")]
-        vendor,
+        [EnumMember(Value = "vendor")] vendor,
 
-        [EnumMember(Value = "csr")]
-        csr,
+        [EnumMember(Value = "csr")] csr,
 
-        [EnumMember(Value = "customer")]
-        customer,
-
+        [EnumMember(Value = "customer")] customer,
     }
 }

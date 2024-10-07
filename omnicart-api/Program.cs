@@ -32,7 +32,7 @@ builder.Services.AddCors(options =>
                                 .AllowAnyMethod()
                                 .AllowCredentials()
                                 .WithExposedHeaders("Access-Control-Allow-Origin")
-                                .SetIsOriginAllowed((origin) => true)
+                                .SetIsOriginAllowed((_) => true)
                                 .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
                       });
 });
@@ -48,7 +48,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
             ClockSkew = TimeSpan.Zero
         };
 

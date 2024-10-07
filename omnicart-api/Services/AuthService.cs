@@ -87,7 +87,8 @@ namespace omnicart_api.Services
                 Name = registerRequest.Name,
                 Email = registerRequest.Email,
                 Password = HashPassword(registerRequest.Password),
-                Role = registerRequest.Role
+                Role = registerRequest.Role,
+                IsActive = registerRequest.Role != Role.customer
             };
 
             await _userCollection.InsertOneAsync(createUser);
@@ -205,7 +206,6 @@ namespace omnicart_api.Services
         }
 
 
-
         // Utility methods for hashing, token generation, and verification
         // 
         /// <summary>
@@ -255,7 +255,7 @@ namespace omnicart_api.Services
                     }),
                     Expires = DateTime.Now.AddMinutes(_jwtLifespan),
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-                    Issuer = _jwtSettings.Value.Issuer,  
+                    Issuer = _jwtSettings.Value.Issuer,
                     Audience = _jwtSettings.Value.Audience
                 };
 
@@ -263,7 +263,6 @@ namespace omnicart_api.Services
 
                 // Wrap in Task.FromResult for async compatibility 
                 return await Task.FromResult(tokenHandler.WriteToken(token));
-                 
             }
             catch (Exception ex)
             {
@@ -322,7 +321,7 @@ namespace omnicart_api.Services
                 Code = code.ToString(),
                 ExpiryAt = DateTime.UtcNow.AddMinutes(5), // token valid for 5 minutes
                 IsVerified = false
-            }; 
+            };
 
             await _userService.UpdateUserAsync(user.Id!, user);
 
@@ -339,6 +338,5 @@ namespace omnicart_api.Services
         {
             return (user.PasswordReset?.Token == token) && (user.PasswordReset?.ExpiryAt > DateTime.UtcNow);
         }
-
     }
 }
