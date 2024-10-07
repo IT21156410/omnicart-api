@@ -106,11 +106,11 @@ namespace omnicart_api.Controllers.Vendor
                 return NotFound(new AppResponse<Order> { Success = false, Message = "Order not found" });
 
             // Ensure order status is not updated after it has been delivered
-            if (existingOrder.OrderStatus == OrderStatus.Shipped || existingOrder.OrderStatus == OrderStatus.Delivered)
+            if (existingOrder.Status == OrderStatus.Shipped || existingOrder.Status == OrderStatus.Delivered)
                 return BadRequest(new AppResponse<Order> { Success = false, Message = "Order cannot be updated after dispatch." });
 
             await _orderService.UpdateOrderStatusAsync(id, status.OrderStatus);
-            existingOrder.OrderStatus = status.OrderStatus;
+            existingOrder.Status = status.OrderStatus;
 
             return Ok(new AppResponse<Order> { Success = true, Data = existingOrder, Message = $"Order status updated to {status.OrderStatus}" });
         }
@@ -126,11 +126,11 @@ namespace omnicart_api.Controllers.Vendor
                 return NotFound(new AppResponse<Order> { Success = false, Message = "Order not found" });
 
             // Ensure the order is not already dispatched or delivered
-            if (existingOrder.OrderStatus == OrderStatus.Shipped || existingOrder.OrderStatus == OrderStatus.Delivered)
+            if (existingOrder.Status == OrderStatus.Shipped || existingOrder.Status == OrderStatus.Delivered)
                 return BadRequest(new AppResponse<Order> { Success = false, Message = "Order cannot be canceled after dispatch." });
 
             await _orderService.UpdateOrderStatusAsync(id, OrderStatus.Cancelled);
-            existingOrder.OrderStatus = OrderStatus.Cancelled;
+            existingOrder.Status = OrderStatus.Cancelled;
 
             return Ok(new AppResponse<Order> { Success = true, Data = existingOrder, Message = "Order canceled successfully" });
         }

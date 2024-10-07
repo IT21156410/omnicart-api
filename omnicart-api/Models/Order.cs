@@ -44,11 +44,11 @@ namespace omnicart_api.Models
         [Required]
         public string ShippingAddress { get; set; } = null!;
 
-        [BsonElement("orderStatus")]
+        [BsonElement("status")]
         [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
         [JsonConverter(typeof(JsonStringEnumConverter))]  // Serialize enum as string in JSON response
         [Required]
-        public OrderStatus OrderStatus { get; set; } = OrderStatus.Pending;  // Default to 'Pending'
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;  // Default to 'Pending'
 
         [BsonElement("items")]
         [Required]

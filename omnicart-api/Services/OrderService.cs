@@ -56,13 +56,13 @@ namespace omnicart_api.Services
                     { "from", "users" },
                     { "localField", "userId" },
                     { "foreignField", "_id" },
-                    { "as", "UserInfo" }
+                    { "as", "VendorInfo" }
                 }),
 
                 // Unwind the UserInfo array
                 new BsonDocument("$unwind", new BsonDocument
                 {
-                    { "path", "$UserInfo" },
+                    { "path", "$VendorInfo" },
                     { "preserveNullAndEmptyArrays", true }
                 }),
 
@@ -74,7 +74,7 @@ namespace omnicart_api.Services
                     { "userId", 1 },
                     { "orderNumber", 1 },
                     { "orderDate", 1 },
-                    { "orderStatus", 1 },
+                    { "status", 1 },
                     { "paymentStatus", 1 },
                     { "totalAmount", 1 },
                     { "shippingAddress", 1 },
@@ -83,9 +83,9 @@ namespace omnicart_api.Services
                     { "note", 1 },
 
                     // Include user information
-                    { "UserInfo._id", 1 },
-                    { "UserInfo.name", 1 },
-                    { "UserInfo.email", 1 }
+                    { "VendorInfo._id", 1 },
+                    { "VendorInfo.name", 1 },
+                    { "VendorInfo.email", 1 }
                 })
             };
 
@@ -105,13 +105,13 @@ namespace omnicart_api.Services
                     { "from", "users" },
                     { "localField", "userId" },
                     { "foreignField", "_id" },
-                    { "as", "UserInfo" }
+                    { "as", "VendorInfo" }
                 }),
 
                 // Unwind the UserInfo array
                 new BsonDocument("$unwind", new BsonDocument
                 {
-                    { "path", "$UserInfo" },
+                    { "path", "$VendorInfo" },
                     { "preserveNullAndEmptyArrays", true }
                 }),
 
@@ -123,7 +123,7 @@ namespace omnicart_api.Services
                     { "userId", 1 },
                     { "orderNumber", 1 },
                     { "orderDate", 1 },
-                    { "orderStatus", 1 },
+                    { "status", 1 },
                     { "paymentStatus", 1 },
                     { "totalAmount", 1 },
                     { "shippingAddress", 1 },
@@ -132,9 +132,9 @@ namespace omnicart_api.Services
                     { "note", 1 },
 
                     // Include user information
-                    { "UserInfo._id", 1 },
-                    { "UserInfo.name", 1 },
-                    { "UserInfo.email", 1 }
+                    { "VendorInfo._id", 1 },
+                    { "VendorInfo.name", 1 },
+                    { "VendorInfo.email", 1 }
                 })
             };
 
@@ -146,7 +146,7 @@ namespace omnicart_api.Services
         public async Task<UpdateResult> UpdateOrderStatusAsync(string id, OrderStatus newStatus)
         {
             var filter = Builders<Order>.Filter.Eq(order => order.Id, id);
-            var update = Builders<Order>.Update.Set(order => order.OrderStatus, newStatus);
+            var update = Builders<Order>.Update.Set(order => order.Status, newStatus);
             return await _orderCollection.UpdateOneAsync(filter, update);
         }
 
