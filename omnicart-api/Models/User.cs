@@ -94,6 +94,26 @@ namespace omnicart_api.Models
         }
     }
 
+    public class CreateUserDto
+    {
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? Id { get; set; }
+
+        [Required]
+        public string Name { get; set; } = null!;
+
+        [Required]
+        public string Email { get; set; } = null!;
+
+        [Required]
+        public string Password { get; set; } = null!;
+
+        [Required]
+        public Role Role { get; set; } = Role.customer;
+
+        public string? BusinessName { get; set; }  // Optional, for vendors
+    }
 
     public class UpdateUserDto
     {

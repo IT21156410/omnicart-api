@@ -104,9 +104,17 @@ namespace omnicart_api.Controllers.Admin
         /// <param name="newUser">The new user object</param>
         /// <returns>CreatedAtAction result with the new user</returns>
         [HttpPost]
-        public async Task<ActionResult<AppResponse<User>>> Post(User newUser)
+        public async Task<ActionResult<AppResponse<User>>> Post(CreateUserDto newUserDto)
         {
-            await _userService.CreateUserAsync(newUser);
+            await _userService.CreateUserAsync(newUserDto);
+
+            var newUser = new User
+            {
+                Name = newUserDto.Name,
+                Email = newUserDto.Email,
+                Password = newUserDto.Password,
+                Role = newUserDto.Role,
+            };
 
             return CreatedAtAction(nameof(Get), new { id = newUser.Id }, new AppResponse<User>
             {

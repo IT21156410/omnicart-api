@@ -16,5 +16,6 @@ namespace omnicart_api.Models
         public string CategoriesCollectionName { get; set; } = null!;
         public string ProductsCollectionName { get; set; } = null!;
         public string OrdersCollectionName { get; set; } = null!;
+        public string VendorsCollectionName { get; set; } = null!;
     }
 }

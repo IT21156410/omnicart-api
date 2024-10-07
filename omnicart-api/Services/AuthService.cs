@@ -213,7 +213,7 @@ namespace omnicart_api.Services
         /// </summary>
         /// <param name="password">The plain-text password to be hashed</param>
         /// <returns>The hashed password as a Base64-encoded string</returns>
-        private static string HashPassword(string password)
+        public static string HashPassword(string password)
         {
             using var sha256 = SHA256.Create();
             var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));

@@ -117,6 +117,7 @@ builder.Services.AddSingleton<UserService>();
 builder.Services.AddSingleton<EmailService>();
 builder.Services.AddSingleton<ProductService>();
 builder.Services.AddSingleton<CategoryService>();
+builder.Services.AddSingleton<VendorService>();
 
 
 builder.Services.AddControllers();
