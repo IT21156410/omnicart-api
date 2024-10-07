@@ -51,5 +51,9 @@ namespace omnicart_api.Models
         [BsonElement("createdAt")]
         [BsonRepresentation(BsonType.DateTime)]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [BsonElement("updatedAt")]
+        [BsonRepresentation(BsonType.DateTime)]
+        public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }
