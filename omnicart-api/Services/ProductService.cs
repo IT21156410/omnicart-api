@@ -3,6 +3,8 @@
 // Author           : Fonseka M.M.N.H
 // Student ID       : IT21156410
 // Description      : Handling data from MongoDB products collection. 
+// Tutorial         : https://www.mongodb.com/docs/drivers/csharp/upcoming/fundamentals/aggregation/
+//                    https://stackoverflow.com/questions/29569289/using-and-in-the-pipeline-for-mongodb-aggregate-function-driver-in-c-sharp
 // ***********************************************************************
 
 using Microsoft.Extensions.Options;
@@ -32,13 +34,35 @@ namespace omnicart_api.Services
         // Get a product by ID
         public async Task<Product?> GetProductByIdAsync(string id)
         {
-            return await _productCollection.Find(product => product.Id == id).FirstOrDefaultAsync();
+            var pipeline = new List<BsonDocument>
+            {
+                new BsonDocument("$lookup", new BsonDocument
+                {
+                    { "from", "categories" },
+                    { "localField", "categoryId" },
+                    { "foreignField", "_id" },
+                    { "as", "category" }
+                }),
+
+                new BsonDocument("$match", new BsonDocument
+                {
+                    { "_id", ObjectId.Parse(id) }
+                }),
+
+
+                new BsonDocument("$unwind", new BsonDocument
+                {
+                    { "path", "$category" },
+                    { "preserveNullAndEmptyArrays", true }
+                }),
+            };
+            return await _productCollection.Aggregate<Product>(pipeline).FirstOrDefaultAsync();
         }
 
         // Get a product by User ID
-        public async Task<List<Product>> GetProductByForeignIdAsync(string userId, string foreignMatchProperty = "userId")
+        public async Task<List<Product>> GetProductByForeignIdAsync(string userId, string foreignMatchProperty = "userId", bool filterOutOfStock = false)
         {
-            var pipeline = new[]
+            var pipeline = new List<BsonDocument>
             {
                 new BsonDocument("$lookup", new BsonDocument
                 {
@@ -60,6 +84,16 @@ namespace omnicart_api.Services
                     { "preserveNullAndEmptyArrays", true }
                 }),
             };
+
+            if (filterOutOfStock)
+            {
+                var outOfStock = new BsonDocument("$match", new BsonDocument
+                {
+                    { "stock", new BsonDocument("$lte", 0) } // Stock <= 0
+                });
+
+                pipeline.Add(outOfStock);
+            }
 
             return await _productCollection.Aggregate<Product>(pipeline).ToListAsync();
         }
@@ -157,7 +191,7 @@ namespace omnicart_api.Services
 
             if (minPrice.HasValue)
             {
-                filter &= Builders<Product>.Filter.Gte("price", minPrice); 
+                filter &= Builders<Product>.Filter.Gte("price", minPrice);
             }
 
             if (maxPrice.HasValue)

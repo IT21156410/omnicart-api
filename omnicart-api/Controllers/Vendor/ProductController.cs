@@ -29,7 +29,7 @@ namespace omnicart_api.Controllers.Vendor
         // Get all products by vendor id
         [HttpGet]
         [Authorize(Roles = "vendor")]
-        public async Task<ActionResult<AppResponse<List<Product>>>> Get()
+        public async Task<ActionResult<AppResponse<List<Product>>>> Get(bool filterOutOfStock = false)
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
@@ -42,7 +42,7 @@ namespace omnicart_api.Controllers.Vendor
                 });
             }
 
-            var products = await _productService.GetProductByForeignIdAsync(userId);
+            var products = await _productService.GetProductByForeignIdAsync(userId, filterOutOfStock: filterOutOfStock);
             return Ok(new AppResponse<List<Product>> { Success = true, Data = products, Message = "Products retrieved successfully" });
         }
 
