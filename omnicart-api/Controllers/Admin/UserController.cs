@@ -103,14 +103,14 @@ namespace omnicart_api.Controllers.Admin
         [HttpPost]
         public async Task<ActionResult<AppResponse<User>>> Post(User newUser)
         {
-            await _userService.CreateUserAsync(newUser);
-
-            return CreatedAtAction(nameof(Get), new { id = newUser.Id }, new AppResponse<User>
+            var user = await _userService.CreateUserAsync(newUser);
+            var response = new AppResponse<User>
             {
                 Success = true,
-                Data = newUser,
+                Data = user,
                 Message = "User created successfully"
-            });
+            };
+            return response;
         }
 
         /// <summary>

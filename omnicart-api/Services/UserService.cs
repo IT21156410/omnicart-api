@@ -58,8 +58,20 @@ namespace omnicart_api.Services
         /// </summary>
         /// <param name="newUser">New User Object</param>
         /// <returns></returns>
-        public async Task CreateUserAsync(User newUser) =>
-            await _userCollection.InsertOneAsync(newUser);
+        public async Task<User> CreateUserAsync(User newUser)
+        {
+            var user = new User
+            {
+                Name = newUser.Name,
+                Email = newUser.Email,
+                Password = AuthService.HashPassword(newUser.Password),
+                Role = newUser.Role,
+                IsActive = newUser.Role != Role.customer
+            };
+
+            await _userCollection.InsertOneAsync(user);
+            return user;
+        }
 
         /// <summary>
         /// Update the user
