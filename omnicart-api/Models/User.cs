@@ -112,9 +112,7 @@ namespace omnicart_api.Models
 
     public class UpdateUserStatusDto
     {
-        [JsonConverter(typeof(JsonStringEnumConverter))]
-        [Required]
-        [BsonElement("isActive")] public bool IsActive { get; set; } = false;
+        [Required] [BsonElement("isActive")] public bool IsActive { get; set; } = false;
     }
 
     public enum Role

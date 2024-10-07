@@ -58,19 +58,8 @@ namespace omnicart_api.Services
         /// </summary>
         /// <param name="newUser">New User Object</param>
         /// <returns></returns>
-        public async Task CreateUserAsync(CreateUserDto newUser)
-        {
-            var user = new User
-            {
-                Id = ObjectId.GenerateNewId().ToString(),
-                Name = newUser.Name,
-                Email = newUser.Email,
-                Password = AuthService.HashPassword(newUser.Password),
-                Role = newUser.Role
-            };
-
-            await _userCollection.InsertOneAsync(user);
-        }
+        public async Task CreateUserAsync(User newUser) =>
+            await _userCollection.InsertOneAsync(newUser);
 
         /// <summary>
         /// Update the user
@@ -91,8 +80,8 @@ namespace omnicart_api.Services
 
         public async Task<UpdateResult> SetUserStatusAsync(string id, bool newStatus)
         {
-            var filter = Builders<User>.Filter.Eq(p => p.Id, id);
-            var update = Builders<User>.Update.Set(p => p.IsActive, newStatus);
+            var filter = Builders<User>.Filter.Eq(u => u.Id, id);
+            var update = Builders<User>.Update.Set(u => u.IsActive, newStatus);
             return await _userCollection.UpdateOneAsync(filter, update);
         }
     }

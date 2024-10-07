@@ -51,7 +51,6 @@ namespace omnicart_api.Controllers.Admin
                     Message = "Users retrieved successfully"
                 };
                 return response;
-
             }
             catch (Exception ex)
             {
@@ -66,7 +65,6 @@ namespace omnicart_api.Controllers.Admin
 
                 return StatusCode(500, response);
             }
-
         }
 
         /// <summary>
@@ -87,7 +85,6 @@ namespace omnicart_api.Controllers.Admin
                     Message = "User not found",
                     ErrorCode = 404
                 });
-
             }
 
             return Ok(new AppResponse<User>
@@ -104,17 +101,9 @@ namespace omnicart_api.Controllers.Admin
         /// <param name="newUser">The new user object</param>
         /// <returns>CreatedAtAction result with the new user</returns>
         [HttpPost]
-        public async Task<ActionResult<AppResponse<User>>> Post(CreateUserDto newUserDto)
+        public async Task<ActionResult<AppResponse<User>>> Post(User newUser)
         {
-            await _userService.CreateUserAsync(newUserDto);
-
-            var newUser = new User
-            {
-                Name = newUserDto.Name,
-                Email = newUserDto.Email,
-                Password = newUserDto.Password,
-                Role = newUserDto.Role,
-            };
+            await _userService.CreateUserAsync(newUser);
 
             return CreatedAtAction(nameof(Get), new { id = newUser.Id }, new AppResponse<User>
             {
