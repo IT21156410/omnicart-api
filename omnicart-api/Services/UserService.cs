@@ -19,18 +19,16 @@ namespace omnicart_api.Services
     public class UserService
     {
         private readonly IMongoCollection<User> _userCollection;
-        private readonly VendorService _vendorService;
 
         /// <summary>
         /// Initializes the UserService with the MongoDB client, database, and users collection
         /// </summary>
         /// <param name="mongoDbSettings"></param>
-        public UserService(IOptions<MongoDbSettings> mongoDbSettings, VendorService vendorService)
+        public UserService(IOptions<MongoDbSettings> mongoDbSettings)
         {
             var mongoClient = new MongoClient(mongoDbSettings.Value.ConnectionString);
             var mongoDatabase = mongoClient.GetDatabase(mongoDbSettings.Value.DatabaseName);
             _userCollection = mongoDatabase.GetCollection<User>(mongoDbSettings.Value.UsersCollectionName);
-            _vendorService = vendorService;
         }
 
         /// <summary>
@@ -57,7 +55,7 @@ namespace omnicart_api.Services
             await _userCollection.Find(user => user.Email == email).FirstOrDefaultAsync();
 
         /// <summary>
-        /// Inserts a new user document and creates a vendor if the role is vendor.
+        /// Inserts a new user document.
         /// </summary>
         /// <param name="newUser">New User Object</param>
         /// <returns></returns>
@@ -73,20 +71,6 @@ namespace omnicart_api.Services
             };
 
             await _userCollection.InsertOneAsync(user);
-
-            // If the role is vendor, create a new vendor record
-            if (user.Role == Role.vendor)
-            {
-                var vendor = new Vendor
-                {
-                    UserId = user.Id,
-                    BusinessName = string.IsNullOrWhiteSpace(newUser.BusinessName) ? "Unnamed Vendor" : newUser.BusinessName,
-                    AverageRating = 0.0M,
-                    Comments = new List<VendorComment>()
-                };
-
-                await _vendorService.CreateVendorAsync(vendor);
-            }
         }
 
         /// <summary>

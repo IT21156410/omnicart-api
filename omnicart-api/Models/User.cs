@@ -111,8 +111,6 @@ namespace omnicart_api.Models
 
         [Required]
         public Role Role { get; set; } = Role.customer;
-
-        public string? BusinessName { get; set; }  // Optional, for vendors
     }
 
     public class UpdateUserDto
