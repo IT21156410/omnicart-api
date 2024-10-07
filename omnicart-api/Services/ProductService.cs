@@ -36,11 +36,10 @@ namespace omnicart_api.Services
         }
 
         // Get a product by User ID
-        public async Task<List<Product>> GetProductByUserIdAsync(string UserId)
+        public async Task<List<Product>> GetProductByForeignIdAsync(string userId, string foreignMatchProperty = "userId")
         {
             var pipeline = new[]
             {
-               
                 new BsonDocument("$lookup", new BsonDocument
                 {
                     { "from", "categories" },
@@ -49,9 +48,9 @@ namespace omnicart_api.Services
                     { "as", "category" }
                 }),
 
-                 new BsonDocument("$match", new BsonDocument
+                new BsonDocument("$match", new BsonDocument
                 {
-                    { "userId",  ObjectId.Parse(UserId) }
+                    { foreignMatchProperty, ObjectId.Parse(userId) }
                 }),
 
 
@@ -129,6 +128,75 @@ namespace omnicart_api.Services
 
             var result = await _productCollection.Aggregate<Product>(pipeline).ToListAsync();
             return result;
+        }
+
+        // Search and filter products based on the provided criteria
+        public async Task<List<Product>> SearchProductsAsync(
+            string? name = null,
+            string? category = null,
+            double? minPrice = null,
+            double? maxPrice = null,
+            string? vendor = null,
+            int? minRating = null,
+            int? maxRating = null,
+            string? sortBy = null,
+            string sortDirection = "asc")
+        {
+            // Build a filter for the search query
+            var filter = Builders<Product>.Filter.Empty;
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                filter &= Builders<Product>.Filter.Regex("name", new BsonRegularExpression(name, "i")); // Case-insensitive name search
+            }
+
+            if (!string.IsNullOrEmpty(category))
+            {
+                filter &= Builders<Product>.Filter.Eq("categoryId", ObjectId.Parse(category)); // Match by category ID
+            }
+
+            if (minPrice.HasValue)
+            {
+                filter &= Builders<Product>.Filter.Gte("price", minPrice); 
+            }
+
+            if (maxPrice.HasValue)
+            {
+                filter &= Builders<Product>.Filter.Lte("price", maxPrice);
+            }
+
+            if (!string.IsNullOrEmpty(vendor))
+            {
+                filter &= Builders<Product>.Filter.Eq("userId", ObjectId.Parse(vendor)); // Match by vendor
+            }
+
+            if (minRating.HasValue)
+            {
+                filter &= Builders<Product>.Filter.Gte("ratings", minRating.Value);
+            }
+
+            if (maxRating.HasValue)
+            {
+                filter &= Builders<Product>.Filter.Lte("ratings", maxRating.Value);
+            }
+
+            // Sorting logic
+            var sortDefinition = Builders<Product>.Sort.Ascending("name"); // default sort
+
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                // Sort by vendor-specific ratings or price
+                if (sortBy.ToLower() == "price" || sortBy.ToLower() == "ratings")
+                    sortDefinition = sortDirection.ToLower() == "desc" ? Builders<Product>.Sort.Descending(sortBy) : Builders<Product>.Sort.Ascending(sortBy);
+                else
+                    sortDefinition = Builders<Product>.Sort.Ascending("name");
+            }
+
+            // Fetch the filtered and sorted products
+            return await _productCollection
+                .Find(filter)
+                .Sort(sortDefinition)
+                .ToListAsync();
         }
 
         // Update an existing product

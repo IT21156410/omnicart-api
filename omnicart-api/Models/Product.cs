@@ -72,38 +72,38 @@ namespace omnicart_api.Models
 
         [BsonElement("price")]
         [Required]
-        [BsonRepresentation(BsonType.Decimal128)]
-        public decimal Price { get; set; } = 0.0M;
+        [BsonRepresentation(BsonType.Double)]
+        public double Price { get; set; } = 0.0;
 
         [BsonElement("discount")]
         [Required]
-        [BsonRepresentation(BsonType.Decimal128)]
-        public decimal Discount { get; set; } = 0.0M;
+        [BsonRepresentation(BsonType.Double)]
+        public double Discount { get; set; } = 0.0;
 
         [BsonElement("productWeight")]
-        [BsonRepresentation(BsonType.Decimal128)]
+        [BsonRepresentation(BsonType.Double)]
         [Required]
-        public decimal ProductWeight { get; set; } = 0.0M;
+        public double ProductWeight { get; set; } = 0.0;
 
         [BsonElement("width")]
-        [BsonRepresentation(BsonType.Decimal128)]
+        [BsonRepresentation(BsonType.Double)]
         [Required]
-        public decimal Width { get; set; } = 0.0M;
+        public double Width { get; set; } = 0.0;
 
         [BsonElement("height")]
-        [BsonRepresentation(BsonType.Decimal128)]
+        [BsonRepresentation(BsonType.Double)]
         [Required]
-        public decimal Height { get; set; } = 0.0M;
+        public double Height { get; set; } = 0.0;
 
         [BsonElement("length")]
-        [BsonRepresentation(BsonType.Decimal128)]
+        [BsonRepresentation(BsonType.Double)]
         [Required]
-        public decimal Length { get; set; } = 0.0M;
+        public double Length { get; set; } = 0.0;
 
         [BsonElement("shippingFee")]
-        [BsonRepresentation(BsonType.Decimal128)]
+        [BsonRepresentation(BsonType.Double)]
         [Required]
-        public decimal ShippingFee { get; set; } = 0.0M;
+        public double ShippingFee { get; set; } = 0.0;
     }
 
     public enum Condition

@@ -42,7 +42,7 @@ namespace omnicart_api.Controllers.Vendor
                 });
             }
 
-            var products = await _productService.GetProductByUserIdAsync(userId);
+            var products = await _productService.GetProductByForeignIdAsync(userId);
             return Ok(new AppResponse<List<Product>> { Success = true, Data = products, Message = "Products retrieved successfully" });
         }
 
