@@ -36,6 +36,16 @@ namespace omnicart_api.Services
             return await _orderCollection.Find(order => order.Id == id).FirstOrDefaultAsync();
         }
 
+        // Get user's order by ID 
+        public async Task<Order?> GetUserOrderByIdAsync(string userId, string orderId)
+        {
+            var filter = Builders<Order>.Filter.And(
+                Builders<Order>.Filter.Eq(order => order.UserId, userId),
+                Builders<Order>.Filter.Eq(order => order.Id, orderId)
+            );
+            return await _orderCollection.Find(filter).FirstOrDefaultAsync();
+        }
+
         // Get orders by Vendor ID
         public async Task<List<Order>> GetOrdersByVendorIdAsync(string vendorId)
         {
@@ -125,6 +135,13 @@ namespace omnicart_api.Services
             var filter = Builders<Order>.Filter.Eq(order => order.Id, id);
             var update = Builders<Order>.Update.Set(order => order.PaymentStatus, newStatus);
             return await _orderCollection.UpdateOneAsync(filter, update);
+        }
+
+        // Order histry by user
+        public async Task<List<Order>> GetOrderHistoryByUserIdAsync(string userId)
+        {
+            var filter = Builders<Order>.Filter.Eq(order => order.UserId, userId);
+            return await _orderCollection.Find(filter).ToListAsync();
         }
 
         // Delete an order by ID
