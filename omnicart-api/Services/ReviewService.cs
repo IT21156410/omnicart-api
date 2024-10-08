@@ -85,5 +85,11 @@ namespace omnicart_api.Services
             return await _reviewCollection.Find(review => review.Id == reviewId).FirstOrDefaultAsync();
         }
 
+        // Delete an review by ID
+        public async Task DeleteReviewAsync(string id)
+        {
+            await _reviewCollection.DeleteOneAsync(review => review.Id == id);
+        }
+
     }
 }

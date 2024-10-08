@@ -34,6 +34,7 @@ namespace omnicart_api.Controllers
         /// <param name="newReview">The review to create</param>
         /// <returns></returns>
         [HttpPost]
+        [Authorize(Roles = "customer")]
         public async Task<ActionResult<AppResponse<Review>>> Post([FromBody] ReviewCreateDto newReview)
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
@@ -74,8 +75,7 @@ namespace omnicart_api.Controllers
         /// <param name="vendorId">The ID of the vendor</param>
         /// <returns>A list of reviews for the vendor</returns>
         [HttpGet("vendor/{vendorId}")]
-        [Authorize(Roles = "vendor")]
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "vendor,admin")]
         public async Task<ActionResult<AppResponse<List<Review>>>> GetReviewsByVendorId(string vendorId)
         {
             var reviews = await _reviewService.GetReviewsByVendorIdAsync(vendorId);
@@ -93,6 +93,8 @@ namespace omnicart_api.Controllers
         /// <param name="customerId">The ID of the customer</param>
         /// <returns>A list of reviews by the customer</returns>
         [HttpGet("customer/{customerId}")]
+        [Authorize(Roles = "customer")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<AppResponse<List<Review>>>> GetReviewsByCustomerId(string customerId)
         {
             var reviews = await _reviewService.GetReviewsByCustomerIdAsync(customerId);
@@ -111,6 +113,7 @@ namespace omnicart_api.Controllers
         /// <param name="updatedComment">The updated comment</param>
         /// <returns></returns>
         [HttpPut("{id}")]
+        [Authorize(Roles = "customer")]
         public async Task<ActionResult<AppResponse<Review>>> UpdateComment(string id, [FromBody] string updatedComment)
         {
             var review = await _reviewService.GetReviewByIdAsync(id);
@@ -154,6 +157,7 @@ namespace omnicart_api.Controllers
         /// <param name="id">The ID of the review</param>
         /// <returns></returns>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "customer")]
         public async Task<ActionResult<AppResponse<string>>> DeleteReview(string id)
         {
             var review = await _reviewService.GetReviewByIdAsync(id);
@@ -178,7 +182,7 @@ namespace omnicart_api.Controllers
                 });
             }
 
-            await _reviewService.UpdateReviewAsync(id, review);
+            await _reviewService.DeleteReviewAsync(id);
 
             return Ok(new AppResponse<string>
             {
