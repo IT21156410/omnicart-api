@@ -96,11 +96,9 @@ namespace omnicart_api.Controllers
             });
         }
 
-
-
-        // Create a new order for the customer
-        [HttpPost]
-        public async Task<ActionResult<AppResponse<Order>>> CreateOrder([FromBody] Order newOrder)
+        // Update an existing order before it's dispatched
+        [HttpPut("{orderId}")]
+        public async Task<ActionResult<AppResponse<Order>>> UpdateOrder(string orderId, [FromBody] UpdateOrderDto updatedOrder)
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
@@ -113,23 +111,102 @@ namespace omnicart_api.Controllers
                 });
             }
 
-            if (!ModelState.IsValid)
+            var existingOrder = await _orderService.GetOrderByIdAsync(orderId);
+            if (existingOrder == null)
             {
-                return UnprocessableEntity(new AppResponse<Product>
+                return NotFound(new AppResponse<string>
                 {
                     Success = false,
-                    Message = "One or more validation errors occurred.",
-                    Error = "Unprocessable Entity",
-                    ErrorCode = 422,
-                    ErrorData = UnprocessableEntity(ModelState)
+                    Message = "Order not found",
+                    ErrorCode = 404
                 });
             }
 
-            newOrder.UserId = userId;
+            // Ensure that only the owner of the order can update it
+            if (existingOrder.UserId != userId)
+            {
+                return BadRequest(new AppResponse<UserDto>
+                {
+                    Success = false,
+                    Message = "You are not allowed to update this order",
+                    ErrorCode = 400
+                });
+            }
 
-            await _orderService.CreateOrderAsync(newOrder);
-            return Ok(new AppResponse<Order> { Success = true, Data = newOrder, Message = "Order created successfully" });
+            // Check if the order has already been dispatched
+            if (existingOrder.Status != OrderStatus.Pending && existingOrder.Status != OrderStatus.Processing)
+            {
+                return BadRequest(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "Order cannot be updated because it has already been dispatched",
+                    ErrorCode = 400
+                });
+            }
+
+            // Update order details (before dispatch)
+            //existingOrder.ShippingAddress = updatedOrder.ShippingAddress ?? existingOrder.ShippingAddress;
+            //existingOrder.Items = updatedOrder.Items ?? existingOrder.Items;
+            //existingOrder.Note = updatedOrder.Note ?? existingOrder.Note;
+
+            // Update order details (before dispatch)
+            existingOrder.ShippingAddress = updatedOrder.ShippingAddress ?? existingOrder.ShippingAddress;
+            if (updatedOrder.Items != null)
+            {
+                existingOrder.Items = updatedOrder.Items.Select(itemDto => new OrderItem
+                {
+                    ProductId = itemDto.ProductId,
+                    Quantity = itemDto.Quantity,
+                    UnitPrice = itemDto.UnitPrice,
+                    Status = itemDto.Status
+                }).ToList();
+            }
+            existingOrder.Note = updatedOrder.Note ?? existingOrder.Note;
+
+            await _orderService.UpdateOrderAsync(existingOrder);
+
+            return Ok(new AppResponse<Order>
+            {
+                Success = true,
+                Data = existingOrder,
+                Message = "Order updated successfully"
+            });
         }
+
+
+
+        // Create a new order for the customer
+        //[HttpPost]
+        //public async Task<ActionResult<AppResponse<Order>>> CreateOrder([FromBody] Order newOrder)
+        //{
+        //    var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        //    if (userId == null)
+        //    {
+        //        return Unauthorized(new AppResponse<string>
+        //        {
+        //            Success = false,
+        //            Message = "User is not authenticated",
+        //            ErrorCode = 401
+        //        });
+        //    }
+
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return UnprocessableEntity(new AppResponse<Product>
+        //        {
+        //            Success = false,
+        //            Message = "One or more validation errors occurred.",
+        //            Error = "Unprocessable Entity",
+        //            ErrorCode = 422,
+        //            ErrorData = UnprocessableEntity(ModelState)
+        //        });
+        //    }
+
+        //    newOrder.UserId = userId;
+
+        //    await _orderService.CreateOrderAsync(newOrder);
+        //    return Ok(new AppResponse<Order> { Success = true, Data = newOrder, Message = "Order created successfully" });
+        //}
 
 
     }

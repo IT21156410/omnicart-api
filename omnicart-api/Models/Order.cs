@@ -161,17 +161,38 @@ namespace omnicart_api.Models
         public PaymentStatus PaymentStatus { get; set; }
     }
 
-    public class AddOrderItemDto
+    public class UpdateOrderDto
     {
         [Required]
-        public string ProductId { get; set; } = null!;
+        [BsonElement("shippingAddress")]
+        public string? ShippingAddress { get; set; }
+
+        [BsonElement("items")]
+        public List<UpdateOrderItemDto>? Items { get; set; }
+
+        [BsonElement("note")]
+        public string? Note { get; set; }
+    }
+    public class UpdateOrderItemDto
+    {
+        [Required]
+        [BsonElement("productId")]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string ProductId { get; set; }
 
         [Required]
+        [BsonElement("quantity")]
         public int Quantity { get; set; }
 
         [Required]
+        [BsonElement("unitPrice")]
         public double UnitPrice { get; set; }
+
+        [BsonElement("status")]
+        [BsonRepresentation(BsonType.String)] // Enum stored as a string
+        public OrderStatus Status { get; set; }
     }
+
 
     public class PurchaseRequest
     {

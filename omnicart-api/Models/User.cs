@@ -112,6 +112,8 @@ namespace omnicart_api.Models
         [Required]
         public string ProductId { get; set; } = null!;
 
+        public string? VendorId { get; set; } = null!;
+
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1.")]
         public int Quantity { get; set; }

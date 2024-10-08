@@ -69,6 +69,7 @@ namespace omnicart_api.Controllers
                 user.Cart.Add(new CartItem
                 {
                     ProductId = cartItem.ProductId,
+                    VendorId = cartItem.VendorId,
                     Quantity = cartItem.Quantity,
                     UnitPrice = cartItem.UnitPrice
                 });
