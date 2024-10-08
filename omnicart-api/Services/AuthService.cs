@@ -34,6 +34,8 @@ namespace omnicart_api.Services
         /// Initializes the AuthService with MongoDB client, database, and users collection.
         /// </summary>
         /// <param name="mongoDbSettings"></param>
+        /// <param name="jwtSettings"></param>
+        /// <param name="userService"></param>
         public AuthService(IOptions<MongoDbSettings> mongoDbSettings, IOptions<JwtSettings> jwtSettings, UserService userService)
         {
             var mongoClient = new MongoClient(mongoDbSettings.Value.ConnectionString);

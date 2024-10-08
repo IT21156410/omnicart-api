@@ -90,6 +90,7 @@ namespace omnicart_api.Services
         public async Task DeleteUserAsync(string id) =>
             await _userCollection.DeleteOneAsync(user => user.Id == id);
 
+        // update the user account status
         public async Task<UpdateResult> SetUserStatusAsync(string id, bool newStatus)
         {
             var filter = Builders<User>.Filter.Eq(u => u.Id, id);

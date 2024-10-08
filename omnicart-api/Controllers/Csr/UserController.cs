@@ -1,4 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿// ***********************************************************************
+// APP NAME         : OmnicartAPI
+// Author           : Fonseka M.M.N.H
+// Student ID       : IT21156410
+// Description      : Handle HTTP API requests related to CSR User managment. 
+// ***********************************************************************
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using omnicart_api.Models;
 using omnicart_api.Requests;
