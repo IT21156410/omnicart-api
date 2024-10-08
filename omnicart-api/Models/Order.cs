@@ -26,6 +26,9 @@ namespace omnicart_api.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string? UserId { get; set; } = null;
 
+        [BsonElement("VendorInfo")]
+        public UserDto? VendorInfo { get; set; } = null;
+
         [BsonElement("orderNumber")]
         [Required]
         public string OrderNumber { get; set; } = null!;

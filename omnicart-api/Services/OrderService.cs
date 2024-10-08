@@ -16,12 +16,14 @@ namespace omnicart_api.Services
     public class OrderService
     {
         private readonly IMongoCollection<Order> _orderCollection;
+        private readonly IMongoCollection<CancelRequest> _cancelRequestsCollection;
 
         public OrderService(IOptions<MongoDbSettings> mongoDbSettings)
         {
             var mongoClient = new MongoClient(mongoDbSettings.Value.ConnectionString);
             var mongoDatabase = mongoClient.GetDatabase(mongoDbSettings.Value.DatabaseName);
             _orderCollection = mongoDatabase.GetCollection<Order>(mongoDbSettings.Value.OrdersCollectionName);
+            _cancelRequestsCollection = mongoDatabase.GetCollection<CancelRequest>(mongoDbSettings.Value.CancelRequestCollectionName);
         }
 
         // Create a new order
@@ -149,6 +151,36 @@ namespace omnicart_api.Services
         {
             await _orderCollection.DeleteOneAsync(order => order.Id == id);
         }
+
+        // Order cancellation request
+        public async Task CreateRequestAsync(CancelRequest request)
+        {
+            await _cancelRequestsCollection.InsertOneAsync(request);
+        }
+
+        // Get a cancellation request by ID
+        public async Task<CancelRequest?> GetRequestByIdAsync(string requestId)
+        {
+            return await _cancelRequestsCollection.Find(request => request.Id == requestId).FirstOrDefaultAsync();
+        }
+
+        // Update cancellation request status
+        public async Task UpdateRequestAsync(CancelRequest request)
+        {
+            var filter = Builders<CancelRequest>.Filter.Eq(x => x.Id, request.Id);
+            var update = Builders<CancelRequest>.Update
+                            .Set(x => x.Status, request.Status)
+                            .Set(x => x.RequestedDate, request.RequestedDate);
+
+            await _cancelRequestsCollection.UpdateOneAsync(filter, update);
+        }
+
+        // Get all cancellation requests
+        public async Task<List<CancelRequest>> GetAllCancellationRequestsAsync()
+        {
+            return await _cancelRequestsCollection.Find(request => true).ToListAsync();
+        }
+
 
         // Generate a Unique Order Number
         public string GenerateOrderNumber()

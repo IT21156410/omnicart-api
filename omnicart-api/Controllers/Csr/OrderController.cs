@@ -101,5 +101,57 @@ namespace omnicart_api.Controllers.Csr
             return Ok(new AppResponse<Order> { Success = true, Data = order, Message = "Order retrieved successfully" });
         }
 
+        // Order cancel request process
+        [HttpPost("cancel/{requestId}/process")]
+        public async Task<ActionResult<AppResponse<string>>> ProcessCancellationRequest(string requestId, [FromBody] ProcessCancelDto processDto)
+        {
+            var cancellationRequest = await _orderService.GetRequestByIdAsync(requestId);
+            if (cancellationRequest == null)
+            {
+                return NotFound(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "Cancellation request not found",
+                    ErrorCode = 404
+                });
+            }
+
+            if (cancellationRequest.Status != CancelRequestStatus.Pending)
+            {
+                return BadRequest(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "Cancellation request is already processed",
+                    ErrorCode = 400
+                });
+            }
+
+            cancellationRequest.Status = processDto.IsApproved ? CancelRequestStatus.Approved : CancelRequestStatus.Rejected;
+
+            await _orderService.UpdateRequestAsync(cancellationRequest);
+
+            // TODO: notify customer about the cancellation
+
+            return Ok(new AppResponse<string>
+            {
+                Success = true,
+                Message = processDto.IsApproved ? "Cancellation request approved." : "Cancellation request rejected."
+            });
+        }
+
+        // Get all cancel requests
+        [HttpGet("cancel-requests")]
+        public async Task<ActionResult<AppResponse<List<CancelRequest>>>> GetCancellationRequests()
+        {
+            var requests = await _orderService.GetAllCancellationRequestsAsync();
+
+            return Ok(new AppResponse<List<CancelRequest>>
+            {
+                Success = true,
+                Data = requests,
+                Message = "Cancellation requests retrieved successfully."
+            });
+        }
+
     }
 }

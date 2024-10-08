@@ -173,6 +173,62 @@ namespace omnicart_api.Controllers
             });
         }
 
+        // Order cancel request
+        [HttpPost("{orderId}/cancel-request")]
+        public async Task<ActionResult<AppResponse<string>>> RequestCancellation(string orderId, [FromBody] CancelRequestDto requestDto)
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "User is not authenticated",
+                    ErrorCode = 401
+                });
+            }
+
+            var existingOrder = await _orderService.GetOrderByIdAsync(orderId);
+            if (existingOrder == null || existingOrder.UserId != userId)
+            {
+                return NotFound(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "Order not found",
+                    ErrorCode = 404
+                });
+            }
+
+            if (existingOrder.Status != OrderStatus.Processing && existingOrder.Status != OrderStatus.Pending)
+            {
+                return BadRequest(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "Order cannot be cancelled because it is already dispatched",
+                    ErrorCode = 400
+                });
+            }
+
+            var cancellationRequest = new CancelRequest
+            {
+                OrderId = orderId,
+                CustomerId = userId,
+                Reason = requestDto.Reason,
+                Status = CancelRequestStatus.Pending
+            };
+
+            await _orderService.CreateRequestAsync(cancellationRequest);
+
+            // TODO: Notify CSR of the cancellation request
+
+            return Ok(new AppResponse<string>
+            {
+                Success = true,
+                Message = "Cancellation request submitted successfully. CSR will review it."
+            });
+        }
+
+
 
 
         // Create a new order for the customer
