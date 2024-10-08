@@ -120,6 +120,7 @@ builder.Services.AddSingleton<CategoryService>();
 builder.Services.AddSingleton<OrderService>();
 builder.Services.AddSingleton<ReviewService>();
 builder.Services.AddSingleton<CustomerService>();
+builder.Services.AddSingleton<NotificationService>();
 
 
 builder.Services.AddControllers();
