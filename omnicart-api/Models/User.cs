@@ -39,6 +39,13 @@ namespace omnicart_api.Models
         [BsonElement("twoFAVerify")] public TwoFAVerify? TwoFAVerify { get; set; }
 
         [BsonElement("isActive")] public bool IsActive { get; set; } = false;
+
+        [BsonElement("cart")]
+        public List<CartItem> Cart { get; set; } = new List<CartItem>();
+
+        [BsonElement("shippingAddress")]
+        [Required]
+        public string? ShippingAddress { get; set; }
     }
 
     public class PasswordReset
@@ -57,6 +64,61 @@ namespace omnicart_api.Models
         [BsonElement("expiryAt")] public required DateTime ExpiryAt { get; set; }
 
         [BsonElement("isVerified")] public bool IsVerified { get; set; }
+    }
+
+    public class CartItem
+    {
+        private int _quantity;
+        private double _unitPrice;
+
+        [BsonElement("productId")]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string ProductId { get; set; } = null!;
+
+        [BsonElement("vendorId")]
+        [BsonRepresentation(BsonType.ObjectId)]
+        [Required]
+        public string VendorId { get; set; } = null!;
+
+        [BsonElement("quantity")]
+        public int Quantity
+        {
+            get => _quantity;
+            set
+            {
+                _quantity = value;
+                TotalPrice = _quantity * _unitPrice; // Automatically update TotalPrice when Quantity changes
+            }
+        }
+
+        [BsonElement("unitPrice")]
+        public double UnitPrice
+        {
+            get => _unitPrice;
+            set
+            {
+                _unitPrice = value;
+                TotalPrice = _quantity * _unitPrice; // Automatically update TotalPrice when UnitPrice changes
+            }
+        }
+
+        [BsonElement("totalPrice")]
+        public double TotalPrice { get; private set; } // Automatically calculated TotalPrice
+    }
+
+
+    public class CartItemDto
+    {
+        [Required]
+        public string ProductId { get; set; } = null!;
+
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1.")]
+        public int Quantity { get; set; }
+
+        [Required]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Unit price must be a positive value.")]
+        public double UnitPrice { get; set; }
     }
 
     public class UserDto

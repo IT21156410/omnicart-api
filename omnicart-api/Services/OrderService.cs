@@ -132,5 +132,12 @@ namespace omnicart_api.Services
         {
             await _orderCollection.DeleteOneAsync(order => order.Id == id);
         }
+
+        // Generate a Unique Order Number
+        public string GenerateOrderNumber()
+        {
+            return $"ORD-{Guid.NewGuid().ToString().Substring(0, 6)}";
+        }
+
     }
 }

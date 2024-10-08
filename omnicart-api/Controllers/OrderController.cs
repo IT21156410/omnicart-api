@@ -28,7 +28,7 @@ namespace omnicart_api.Controllers
             _orderService = orderService;
         }
 
-        // Create a new order for the vendor
+        // Create a new order for the customer
         [HttpPost]
         public async Task<ActionResult<AppResponse<Order>>> CreateOrder([FromBody] Order newOrder)
         {

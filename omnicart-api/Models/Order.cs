@@ -173,4 +173,9 @@ namespace omnicart_api.Models
         public double UnitPrice { get; set; }
     }
 
+    public class PurchaseRequest
+    {
+        public string? ShippingAddress { get; set; }
+    }
+
 }
