@@ -180,6 +180,11 @@ namespace omnicart_api.Services
             return true;
         }
 
+        /// <summary>
+        /// Verifies the two-factor authentication (2FA) code provided by the user.
+        /// </summary>
+        /// <param name="verifyTwoFactorRequest">The request containing the user's email and the 2FA code to verify.</param>
+        /// <returns>whether the verification was successful (true) or failed (false) </returns>
         public async Task<bool> VerifyTwoFactorAsync(VerifyTwoFactorRequest verifyTwoFactorRequest)
         {
             var user2AF = await _userCollection.Find(user => user.Email == verifyTwoFactorRequest.Email).FirstOrDefaultAsync();

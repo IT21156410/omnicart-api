@@ -24,20 +24,31 @@ namespace omnicart_api.Services
             _userCollection = mongoDatabase.GetCollection<User>(mongoDbSettings.Value.UsersCollectionName);
         }
 
-        // Get user by ID
+        /// <summary>
+        /// Retrieves a user by their unique identifier.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <returns>A task representing the asynchronous operation, containing the user if found; otherwise, null.</returns>
         public async Task<User?> GetUserByIdAsync(string userId)
         {
             return await _userCollection.Find(u => u.Id == userId).FirstOrDefaultAsync();
         }
 
-        // Update the user's cart
+        /// <summary>
+        /// Updates the cart of the specified user with the provided list of cart items.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="updatedCart">The updated list of cart items to set for the user.</param>
         public async Task UpdateUserCartAsync(string userId, List<CartItem> updatedCart)
         {
             var update = Builders<User>.Update.Set(u => u.Cart, updatedCart);
             await _userCollection.UpdateOneAsync(u => u.Id == userId, update);
         }
 
-        // Save the user's cart
+        /// <summary>
+        /// Saves the specified user's cart by updating it in the database.
+        /// </summary>
+        /// <param name="user">The user whose cart is to be saved, including the updated cart items.</param>
         public async Task SaveCartAsync(User user)
         {
             var filter = Builders<User>.Filter.Eq(u => u.Id, user.Id);
