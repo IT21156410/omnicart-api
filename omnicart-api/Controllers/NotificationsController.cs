@@ -1,4 +1,11 @@
-﻿using System.Security.Claims;
+﻿// ***********************************************************************
+// APP NAME         : OmnicartAPI
+// Author           : Fonseka M.M.N.H
+// Student ID       : IT21156410
+// Description      : Handle HTTP API requests related to notifications management. 
+// ***********************************************************************
+
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using omnicart_api.Models;
