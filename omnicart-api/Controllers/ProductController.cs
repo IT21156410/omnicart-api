@@ -1,3 +1,10 @@
+// ***********************************************************************
+// APP NAME         : OmnicartAPI
+// Author           : Fonseka M.M.N.H
+// Student ID       : IT21156410
+// Description      : Handle HTTP API requests related to public product management. 
+// ***********************************************************************
+
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

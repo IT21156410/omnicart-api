@@ -1,4 +1,11 @@
-﻿using Microsoft.Extensions.Options;
+﻿// ***********************************************************************
+// APP NAME         : OmnicartAPI
+// Author           : Fonseka M.M.N.H
+// Student ID       : IT21156410
+// Description      : Handling data from MongoDB categories collection. 
+// ***********************************************************************
+
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using omnicart_api.Models;
 
@@ -8,6 +15,7 @@ public class CategoryService
 {
     private readonly IMongoCollection<Category> _categoryCollection;
 
+    // assign mongodb settings and get the collection
     public CategoryService(IOptions<MongoDbSettings> mongoDbSettings)
     {
         var mongoClient = new MongoClient(mongoDbSettings.Value.ConnectionString);
