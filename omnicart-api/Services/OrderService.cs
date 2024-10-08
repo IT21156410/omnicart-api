@@ -39,59 +39,11 @@ namespace omnicart_api.Services
         // Get orders by Vendor ID
         public async Task<List<Order>> GetOrdersByVendorIdAsync(string vendorId)
         {
-            //var filter = Builders<Order>.Filter.ElemMatch(order => order.Items, item => item.VendorId == vendorId);
-            //return await _orderCollection.Find(filter).ToListAsync();
+            // Filter orders where at least one item has the matching vendorId
+            var filter = Builders<Order>.Filter.ElemMatch(order => order.Items, item => item.VendorId == vendorId);
 
-            var pipeline = new[]
-            {
-                // Match orders with the specified VendorId
-                new BsonDocument("$match", new BsonDocument
-                {
-                    { "userId", ObjectId.Parse(vendorId) }
-                }),
-
-                // Lookup user information
-                new BsonDocument("$lookup", new BsonDocument
-                {
-                    { "from", "users" },
-                    { "localField", "userId" },
-                    { "foreignField", "_id" },
-                    { "as", "VendorInfo" }
-                }),
-
-                // Unwind the UserInfo array
-                new BsonDocument("$unwind", new BsonDocument
-                {
-                    { "path", "$VendorInfo" },
-                    { "preserveNullAndEmptyArrays", true }
-                }),
-
-                // Project necessary fields
-                new BsonDocument("$project", new BsonDocument
-                {
-                    // Include order fields
-                    { "_id", 1 },
-                    { "userId", 1 },
-                    { "orderNumber", 1 },
-                    { "orderDate", 1 },
-                    { "status", 1 },
-                    { "paymentStatus", 1 },
-                    { "totalAmount", 1 },
-                    { "shippingAddress", 1 },
-                    { "items", 1 },
-                    { "shippingFee", 1 },
-                    { "note", 1 },
-
-                    // Include user information
-                    { "VendorInfo._id", 1 },
-                    { "VendorInfo.name", 1 },
-                    { "VendorInfo.email", 1 }
-                })
-            };
-
-            var result = await _orderCollection.Aggregate<Order>(pipeline).ToListAsync();
-            return result;
-
+            var orders = await _orderCollection.Find(filter).ToListAsync();
+            return orders;
         }
 
         // Get all orders
@@ -142,11 +94,28 @@ namespace omnicart_api.Services
             return result;
         }
 
+        // Update order
+        public async Task<UpdateResult> UpdateOrderAsync(Order order)
+        {
+            var filter = Builders<Order>.Filter.Eq(o => o.Id, order.Id);
+            var update = Builders<Order>.Update
+                .Set(o => o.Status, order.Status)
+                .Set(o => o.Items, order.Items)
+                .Set(o => o.Note, order.Note);
+
+            return await _orderCollection.UpdateOneAsync(filter, update);
+        }
+
         // Update an order's status (e.g., Processing, Shipped, Delivered)
-        public async Task<UpdateResult> UpdateOrderStatusAsync(string id, OrderStatus newStatus)
+        public async Task<UpdateResult> UpdateOrderStatusAsync(string id, OrderStatus newStatus, string? note)
         {
             var filter = Builders<Order>.Filter.Eq(order => order.Id, id);
             var update = Builders<Order>.Update.Set(order => order.Status, newStatus);
+            if (!string.IsNullOrEmpty(note))
+            {
+                update = update.Set(order => order.Note, note);
+            }
+
             return await _orderCollection.UpdateOneAsync(filter, update);
         }
 

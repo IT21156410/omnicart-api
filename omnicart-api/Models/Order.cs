@@ -37,8 +37,8 @@ namespace omnicart_api.Models
 
         [BsonElement("totalAmount")]
         [Required]
-        [BsonRepresentation(BsonType.Decimal128)]
-        public decimal TotalAmount { get; set; } = 0.0M;
+        [BsonRepresentation(BsonType.Double)]
+        public double TotalAmount { get; set; } = 0.0;
 
         [BsonElement("shippingAddress")]
         [Required]
@@ -55,9 +55,9 @@ namespace omnicart_api.Models
         public List<OrderItem> Items { get; set; } = new List<OrderItem>();
 
         [BsonElement("shippingFee")]
-        [BsonRepresentation(BsonType.Decimal128)]
+        [BsonRepresentation(BsonType.Double)]
         [Required]
-        public decimal ShippingFee { get; set; } = 0.0M;
+        public double ShippingFee { get; set; } = 0.0;
 
         [BsonElement("paymentStatus")]
         [BsonRepresentation(BsonType.String)]  // Store the enum as a string in the database
@@ -86,13 +86,19 @@ namespace omnicart_api.Models
         public int Quantity { get; set; } = 1;
 
         [BsonElement("unitPrice")]
-        [BsonRepresentation(BsonType.Decimal128)]
+        [BsonRepresentation(BsonType.Double)]
         [Required]
-        public decimal UnitPrice { get; set; } = 0.0M;
+        public double UnitPrice { get; set; } = 0.0;
 
         [BsonElement("totalPrice")]
-        [BsonRepresentation(BsonType.Decimal128)]
-        public decimal TotalPrice { get { return UnitPrice * Quantity; } }  // Calculated value
+        [BsonRepresentation(BsonType.Double)]
+        public double TotalPrice { get { return UnitPrice * Quantity; } }  // Calculated value
+
+        [BsonElement("status")]
+        [BsonRepresentation(BsonType.String)]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [Required]
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;  // Default to 'Pending'
     }
 
     public enum OrderStatus
@@ -105,6 +111,9 @@ namespace omnicart_api.Models
 
         [EnumMember(Value = "Shipped")]
         Shipped,  // Order shipped but not yet delivered
+
+        [EnumMember(Value = "PartiallyDelivered")]
+        PartiallyDelivered,  // Order delivered by multiple Vendors
 
         [EnumMember(Value = "Delivered")]
         Delivered,  // Order delivered to the customer
@@ -129,7 +138,20 @@ namespace omnicart_api.Models
     {
         [JsonConverter(typeof(JsonStringEnumConverter))]
         [Required]
-        public OrderStatus OrderStatus { get; set; }
+        public OrderStatus Status { get; set; }
+    }
+
+    public class CancelOrderDto
+    {
+        [Required]
+        public string Note { get; set; }
+    }
+
+    public class UpdateOrderItemStatusDto
+    {
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [Required]
+        public OrderStatus Status { get; set; }
     }
 
     public class UpdatePaymentStatusDto
@@ -148,7 +170,7 @@ namespace omnicart_api.Models
         public int Quantity { get; set; }
 
         [Required]
-        public decimal UnitPrice { get; set; }
+        public double UnitPrice { get; set; }
     }
 
 }

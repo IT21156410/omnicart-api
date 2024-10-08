@@ -2,7 +2,7 @@
 // APP NAME         : OmnicartAPI
 // Author           : Prashantha K.G.M
 // Student ID       : IT21169908
-// Description      : Handle HTTP API requests related to admin order management. 
+// Description      : Handle HTTP API requests related to csr order management. 
 // Tutorial         : https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio
 // ***********************************************************************
 
@@ -13,11 +13,11 @@ using omnicart_api.Requests;
 using omnicart_api.Services;
 using System.Security.Claims;
 
-namespace omnicart_api.Controllers.Admin
+namespace omnicart_api.Controllers.Csr
 {
-    [Route("api/admin/orders")]
+    [Route("api/csr/orders")]
     [ApiController]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "csr")]
     [ServiceFilter(typeof(ValidateModelAttribute))]
     public class OrderController : ControllerBase
     {
@@ -94,74 +94,11 @@ namespace omnicart_api.Controllers.Admin
             var order = await _orderService.GetOrderByIdAsync(id);
 
             if (order == null)
+            {
                 return NotFound(new AppResponse<Order> { Success = false, Message = "Order not found" });
+            }
 
             return Ok(new AppResponse<Order> { Success = true, Data = order, Message = "Order retrieved successfully" });
-        }
-
-        // Update the payment status of an order
-        [HttpPatch("{id:length(24)}/payment")]
-        public async Task<ActionResult<AppResponse<Order>>> UpdatePaymentStatus(string id, [FromBody] UpdatePaymentStatusDto paymentStatus)
-        {
-            var existingOrder = await _orderService.GetOrderByIdAsync(id);
-
-            if (existingOrder == null)
-                return NotFound(new AppResponse<Order> { Success = false, Message = "Order not found" });
-
-            await _orderService.UpdatePaymentStatusAsync(id, paymentStatus.PaymentStatus);
-            existingOrder.PaymentStatus = paymentStatus.PaymentStatus;
-
-            return Ok(new AppResponse<Order> { Success = true, Data = existingOrder, Message = $"Payment status updated to {paymentStatus.PaymentStatus}" });
-        }
-
-        // Update the status of an order items
-        [HttpPatch("{orderId}/items/{productId}/status")]
-        public async Task<ActionResult<AppResponse<Order>>> UpdateOrderItemStatus(string orderId, string productId, [FromBody] UpdateOrderItemStatusDto itemStatus)
-        {
-            var order = await _orderService.GetOrderByIdAsync(orderId);
-            if (order == null)
-            {
-                return NotFound(new AppResponse<Order> { Success = false, Message = "Order not found" });
-            }
-
-            // Update the delivery status for items
-            foreach (var item in order.Items.Where(i => i.ProductId == productId))
-            {
-                item.Status = itemStatus.Status;
-            }
-
-            // Check if all items are delivered
-            if (order.Items.All(i => i.Status == OrderStatus.Delivered))
-            {
-                order.Status = OrderStatus.Delivered;
-            }
-            else if (order.Items.Any(i => i.Status == OrderStatus.Delivered))
-            {
-                order.Status = OrderStatus.PartiallyDelivered;
-            }
-
-            await _orderService.UpdateOrderAsync(order);
-
-            return Ok(new AppResponse<Order>
-            {
-                Success = true,
-                Data = order,
-                Message = "Item delivery status updated successfully"
-            });
-        }
-
-        // Delete an order (cannot typically delete an order, but in case of error, this can be useful)
-        [HttpDelete("{id:length(24)}")]
-        public async Task<ActionResult<AppResponse<Order>>> DeleteOrder(string id)
-        {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-            var order = await _orderService.GetOrderByIdAsync(id);
-
-            if (order == null || order.Items.Any(item => item.VendorId != userId))
-                return NotFound(new AppResponse<Order> { Success = false, Message = "Order not found" });
-
-            await _orderService.DeleteOrderAsync(id);
-            return Ok(new AppResponse<Order> { Success = true, Data = order, Message = "Order deleted successfully" });
         }
 
     }

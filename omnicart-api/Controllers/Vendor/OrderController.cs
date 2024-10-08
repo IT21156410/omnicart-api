@@ -62,91 +62,78 @@ namespace omnicart_api.Controllers.Vendor
             return Ok(new AppResponse<Order> { Success = true, Data = order, Message = "Order retrieved successfully" });
         }
 
-        // Create a new order for the vendor
-        [HttpPost]
-        public async Task<ActionResult<AppResponse<Order>>> CreateOrder([FromBody] Order newOrder)
-        {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return Unauthorized(new AppResponse<string>
-                {
-                    Success = false,
-                    Message = "User is not authenticated",
-                    ErrorCode = 401
-                });
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return UnprocessableEntity(new AppResponse<Product>
-                {
-                    Success = false,
-                    Message = "One or more validation errors occurred.",
-                    Error = "Unprocessable Entity",
-                    ErrorCode = 422,
-                    ErrorData = UnprocessableEntity(ModelState)
-                });
-            }
-
-            newOrder.UserId = userId;
-
-            await _orderService.CreateOrderAsync(newOrder);
-            return Ok(new AppResponse<Order> { Success = true, Data = newOrder, Message = "Order created successfully" });
-        }
-
         // Update the status of an order (e.g., processing, shipped, delivered)
         [HttpPatch("{id:length(24)}/status")]
-        public async Task<ActionResult<AppResponse<Order>>> UpdateOrderStatus(string id, [FromBody] UpdateOrderStatusDto status)
+        public async Task<ActionResult<AppResponse<Order>>> UpdateOrderStatus(string id, [FromBody] UpdateOrderStatusDto orderStatus)
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
             var existingOrder = await _orderService.GetOrderByIdAsync(id);
 
-            if (existingOrder == null || existingOrder.Items.Any(item => item.VendorId != userId))
+            if (existingOrder == null)
                 return NotFound(new AppResponse<Order> { Success = false, Message = "Order not found" });
 
             // Ensure order status is not updated after it has been delivered
             if (existingOrder.Status == OrderStatus.Shipped || existingOrder.Status == OrderStatus.Delivered)
                 return BadRequest(new AppResponse<Order> { Success = false, Message = "Order cannot be updated after dispatch." });
 
-            await _orderService.UpdateOrderStatusAsync(id, status.OrderStatus);
-            existingOrder.Status = status.OrderStatus;
+            if (orderStatus.Status != OrderStatus.Delivered)
+            {
+                return BadRequest(new AppResponse<Order> { Success = false, Message = "You are not authorized to change this status." });
+            }
 
-            return Ok(new AppResponse<Order> { Success = true, Data = existingOrder, Message = $"Order status updated to {status.OrderStatus}" });
+            // If the order is being marked as Delivered, ensure all items are already delivered
+            if (orderStatus.Status == OrderStatus.Delivered)
+            {
+                if (existingOrder.Items.Any(item => item.Status != OrderStatus.Delivered))
+                {
+                    return BadRequest(new AppResponse<Order> { Success = false, Message = "Cannot mark the order as Delivered because not all items are delivered." });
+                }
+            }
+
+            await _orderService.UpdateOrderStatusAsync(id, orderStatus.Status, null);
+            existingOrder.Status = orderStatus.Status;
+
+            // TODO: it should inform to customer as a notification.
+
+            return Ok(new AppResponse<Order> { Success = true, Data = existingOrder, Message = $"Order status updated to {orderStatus.Status}" });
         }
 
-        // Cancel an order (before it is dispatched)
-        [HttpPatch("{id:length(24)}/cancel")]
-        public async Task<ActionResult<AppResponse<Order>>> CancelOrder(string id)
+        // Update the status of an order items
+        [HttpPatch("{orderId}/items/{productId}/status")]
+        public async Task<ActionResult<AppResponse<Order>>> UpdateOrderItemStatus(string orderId, string productId, [FromBody] UpdateOrderItemStatusDto itemStatus)
         {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-            var existingOrder = await _orderService.GetOrderByIdAsync(id);
+            var vendorId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
-            if (existingOrder == null || existingOrder.Items.Any(item => item.VendorId != userId))
+            var order = await _orderService.GetOrderByIdAsync(orderId);
+            if (order == null)
+            {
                 return NotFound(new AppResponse<Order> { Success = false, Message = "Order not found" });
+            }
 
-            // Ensure the order is not already dispatched or delivered
-            if (existingOrder.Status == OrderStatus.Shipped || existingOrder.Status == OrderStatus.Delivered)
-                return BadRequest(new AppResponse<Order> { Success = false, Message = "Order cannot be canceled after dispatch." });
+            // Update the delivery status for items related to the vendor
+            foreach (var item in order.Items.Where(i => i.VendorId == vendorId && i.ProductId == productId))
+            {
+                item.Status = itemStatus.Status;
+            }
 
-            await _orderService.UpdateOrderStatusAsync(id, OrderStatus.Cancelled);
-            existingOrder.Status = OrderStatus.Cancelled;
+            // Check if all items are delivered
+            if (order.Items.All(i => i.Status == OrderStatus.Delivered))
+            {
+                order.Status = OrderStatus.Delivered;
+            }
+            else if (order.Items.Any(i => i.Status == OrderStatus.Delivered))
+            {
+                order.Status = OrderStatus.PartiallyDelivered;
+            }
 
-            return Ok(new AppResponse<Order> { Success = true, Data = existingOrder, Message = "Order canceled successfully" });
-        }
+            await _orderService.UpdateOrderAsync(order);
 
-        // Delete an order (Vendor cannot typically delete an order, but in case of error, this can be useful)
-        [HttpDelete("{id:length(24)}")]
-        public async Task<ActionResult<AppResponse<Order>>> DeleteOrder(string id)
-        {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-            var order = await _orderService.GetOrderByIdAsync(id);
-
-            if (order == null || order.Items.Any(item => item.VendorId != userId))
-                return NotFound(new AppResponse<Order> { Success = false, Message = "Order not found" });
-
-            await _orderService.DeleteOrderAsync(id);
-            return Ok(new AppResponse<Order> { Success = true, Data = order, Message = "Order deleted successfully" });
+            return Ok(new AppResponse<Order>
+            {
+                Success = true,
+                Data = order,
+                Message = "Item delivery status updated successfully"
+            });
         }
 
     }
