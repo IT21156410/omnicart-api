@@ -51,6 +51,7 @@ public class NotificationsController : ControllerBase
     public async Task<ActionResult<List<Notification>>> GetUserNotifications()
     {
         var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
         if (userId == null)
         {
             return UnprocessableEntity(new AppResponse<Product>
@@ -63,7 +64,7 @@ public class NotificationsController : ControllerBase
             });
         }
 
-        var notifications = await _notificationService.GetNotificationsByUserIdAsync(userId);
+        var notifications = await _notificationService.GetNotificationsForUserOrRoleAsync(userId, userRole);
         var response = new AppResponse<List<Notification>> { Success = true, Message = "Notification retrieves successfully.", Data = notifications };
         return Ok(response);
     }
@@ -76,5 +77,27 @@ public class NotificationsController : ControllerBase
     {
         await _notificationService.MarkNotificationAsReadAsync(notificationId);
         return Ok(new AppResponse<Notification> { Success = true, Message = "Notification marked as read." });
+    }
+
+    [HttpGet("unread-count")]
+    [Authorize(Roles = "admin,vendor,csr,customer")] // only logged-in users
+    public async Task<ActionResult<AppResponse<object>>> GetUnreadNotificationCount()
+    {
+        var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+        if (userId == null)
+        {
+            return UnprocessableEntity(new AppResponse<Product>
+            {
+                Success = false,
+                Message = "Please login first.",
+                Error = "Unprocessable Entity",
+                ErrorCode = 422,
+                ErrorData = UnprocessableEntity(ModelState)
+            });
+        }
+
+        var unreadCount = await _notificationService.GetUnreadNotificationCountAsync(userId, userRole);
+        return Ok(new AppResponse<object> { Success = true, Message = "Notification marked as read.", Data = new { unreadCount } });
     }
 }

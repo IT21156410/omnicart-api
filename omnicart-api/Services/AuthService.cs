@@ -42,7 +42,7 @@ namespace omnicart_api.Services
             var mongoDatabase = mongoClient.GetDatabase(mongoDbSettings.Value.DatabaseName);
             _userCollection = mongoDatabase.GetCollection<User>(mongoDbSettings.Value.UsersCollectionName);
 
-            _jwtLifespan = 1440; //minutes
+            _jwtLifespan = 43200; //minutes
             _userService = userService;
             _jwtSettings = jwtSettings;
             _jwtSecret = jwtSettings.Value.Key;

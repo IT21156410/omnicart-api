@@ -47,10 +47,22 @@ public class NotificationService
         return await _notificationCollection.Find(n => n.UserId == userId).ToListAsync();
     }
 
-    // Get notifications for a specific user or their roles
+    // Get notifications for a specific user roles
     public async Task<List<Notification>> GetNotificationsForUserAsync(string userRoles)
     {
         var filter = Builders<Notification>.Filter.Eq("roles", userRoles);
+
+        return await _notificationCollection.Find(filter).ToListAsync();
+    }
+
+    // Get notifications for a specific user or their roles
+    public async Task<List<Notification>> GetNotificationsForUserOrRoleAsync(string userId, string? userRole)
+    {
+        // Match notifications that are either for the specific userId or for the roles the user belongs to
+        var filter = Builders<Notification>.Filter.Or(
+            Builders<Notification>.Filter.Eq(n => n.UserId, userId),
+            Builders<Notification>.Filter.Eq("roles", userRole)
+        );
 
         return await _notificationCollection.Find(filter).ToListAsync();
     }
@@ -61,5 +73,20 @@ public class NotificationService
         var filter = Builders<Notification>.Filter.Eq(n => n.Id, notificationId);
         var update = Builders<Notification>.Update.Set(n => n.IsRead, true);
         await _notificationCollection.UpdateOneAsync(filter, update);
+    }
+
+    public async Task<long> GetUnreadNotificationCountAsync(string? userId, string? userRole)
+    {
+        // Build the filter for unread notifications
+        var filter = Builders<Notification>.Filter.And(
+            Builders<Notification>.Filter.Eq(n => n.IsRead, false),
+            Builders<Notification>.Filter.Or(
+                Builders<Notification>.Filter.Eq(n => n.UserId, userId),
+                Builders<Notification>.Filter.Eq("roles", userRole)
+            )
+        );
+
+        // Return the count of unread notifications
+        return await _notificationCollection.CountDocumentsAsync(filter);
     }
 }
