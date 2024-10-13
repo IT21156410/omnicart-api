@@ -58,7 +58,7 @@ namespace omnicart_api.Controllers.Csr
             existingOrder.Status = OrderStatus.Cancelled;
             existingOrder.Note = cancel.Note;
 
-            await _orderService.UpdateOrderStatusAsync(id, OrderStatus.Cancelled, cancel.Note);
+            await _orderService.UpdateOrderStatusAsync(existingOrder, OrderStatus.Cancelled, cancel.Note);
 
             // TODO: it should inform to customer as a notification.
 
@@ -79,7 +79,7 @@ namespace omnicart_api.Controllers.Csr
             if (existingOrder.Status == OrderStatus.Shipped || existingOrder.Status == OrderStatus.Delivered)
                 return BadRequest(new AppResponse<Order> { Success = false, Message = "Order cannot be updated after dispatch." });
 
-            await _orderService.UpdateOrderStatusAsync(id, orderStatus.Status, null);
+            await _orderService.UpdateOrderStatusAsync(existingOrder, orderStatus.Status, null);
             existingOrder.Status = orderStatus.Status;
 
             // TODO: it should inform to customer as a notification.

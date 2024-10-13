@@ -90,7 +90,7 @@ namespace omnicart_api.Controllers.Vendor
                 }
             }
 
-            await _orderService.UpdateOrderStatusAsync(id, orderStatus.Status, null);
+            await _orderService.UpdateOrderStatusAsync(existingOrder, orderStatus.Status, null);
             existingOrder.Status = orderStatus.Status;
 
             // TODO: it should inform to customer as a notification.

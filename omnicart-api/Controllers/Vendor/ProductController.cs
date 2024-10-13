@@ -20,10 +20,12 @@ namespace omnicart_api.Controllers.Vendor
     public class ProductController : ControllerBase
     {
         private readonly ProductService _productService;
+        private readonly OrderService _orderService;
 
-        public ProductController(ProductService productService)
+        public ProductController(ProductService productService, OrderService orderService)
         {
             _productService = productService;
+            _orderService = orderService;
         }
 
         // Get all products by vendor id
@@ -141,7 +143,18 @@ namespace omnicart_api.Controllers.Vendor
             if (existingProduct == null || existingProduct.UserId != userId)
                 return NotFound(new AppResponse<string> { Success = false, Message = "Product not found" });
 
-            await _productService.DeleteProductAsync(id);
+            // Check if the product is part of any pending orders
+            var pendingOrders = await _orderService.GetOrdersByProductIdAsync(id, new List<OrderStatus> { OrderStatus.Pending, OrderStatus.Processing });
+            if (pendingOrders.Any())
+            {
+                return BadRequest(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "Product cannot be deleted because it is part of pending orders."
+                });
+            }
+
+            // await _productService.DeleteProductAsync(id);
             return Ok(new AppResponse<Product> { Success = true, Data = existingProduct, Message = "Product deleted successfully" });
         }
 
@@ -171,7 +184,7 @@ namespace omnicart_api.Controllers.Vendor
                 });
             }
 
-            await _productService.UpdateStockAsync(id, newStock.Stock);
+            await _productService.UpdateStockAsync(existingProduct, newStock.Stock);
 
             existingProduct.Stock = newStock.Stock;
             return Ok(new AppResponse<Product> { Success = true, Data = existingProduct, Message = "Product stock updated successfully" });

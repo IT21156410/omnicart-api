@@ -36,7 +36,7 @@ public class NotificationService
             Roles = !string.IsNullOrWhiteSpace(data.UserId) ? null : data.Roles,
             IsRead = false,
         };
-        Console.WriteLine(notification.Roles);
+        // Console.WriteLine(notification.Roles);
 
         await _notificationCollection.InsertOneAsync(notification);
     }
@@ -63,8 +63,8 @@ public class NotificationService
             Builders<Notification>.Filter.Eq(n => n.UserId, userId),
             Builders<Notification>.Filter.Eq("roles", userRole)
         );
-
-        return await _notificationCollection.Find(filter).ToListAsync();
+        var sortDefinition = Builders<Notification>.Sort.Descending("createdAt");
+        return await _notificationCollection.Find(filter).Sort(sortDefinition).ToListAsync();
     }
 
     // Mark a notification as read

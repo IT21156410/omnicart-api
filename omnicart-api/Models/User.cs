@@ -40,12 +40,9 @@ namespace omnicart_api.Models
 
         [BsonElement("isActive")] public bool IsActive { get; set; } = false;
 
-        [BsonElement("cart")]
-        public List<CartItem> Cart { get; set; } = new List<CartItem>();
+        [BsonElement("cart")] public List<CartItem> Cart { get; set; } = new List<CartItem>();
 
-        [BsonElement("shippingAddress")]
-        [Required]
-        public string? ShippingAddress { get; set; }
+        [BsonElement("shippingAddress")] public string? ShippingAddress { get; set; } = String.Empty;
     }
 
     public class PasswordReset
@@ -102,15 +99,13 @@ namespace omnicart_api.Models
             }
         }
 
-        [BsonElement("totalPrice")]
-        public double TotalPrice { get; private set; } // Automatically calculated TotalPrice
+        [BsonElement("totalPrice")] public double TotalPrice { get; private set; } // Automatically calculated TotalPrice
     }
 
 
     public class CartItemDto
     {
-        [Required]
-        public string ProductId { get; set; } = null!;
+        [Required] public string ProductId { get; set; } = null!;
 
         public string? VendorId { get; set; } = null!;
 

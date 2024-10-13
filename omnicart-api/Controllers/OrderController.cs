@@ -22,10 +22,12 @@ namespace omnicart_api.Controllers
     public class OrderController : ControllerBase
     {
         private readonly OrderService _orderService;
+        private readonly ProductService _productService;
 
-        public OrderController(OrderService orderService)
+        public OrderController(OrderService orderService, ProductService productService)
         {
             _orderService = orderService;
+            _productService = productService;
         }
 
         [HttpGet("history")]
@@ -151,16 +153,59 @@ namespace omnicart_api.Controllers
 
             // Update order details (before dispatch)
             existingOrder.ShippingAddress = updatedOrder.ShippingAddress ?? existingOrder.ShippingAddress;
+
             if (updatedOrder.Items != null)
             {
-                existingOrder.Items = updatedOrder.Items.Select(itemDto => new OrderItem
+                // Revert stock for previously ordered items
+                foreach (var existingOrderItem in existingOrder.Items)
                 {
-                    ProductId = itemDto.ProductId,
-                    Quantity = itemDto.Quantity,
-                    UnitPrice = itemDto.UnitPrice,
-                    Status = itemDto.Status
+                    var product = await _productService.GetProductByIdAsync(existingOrderItem.ProductId);
+                    if (product == null)
+                    {
+                        return NotFound(new AppResponse<string> { Success = false, Message = $"Product with ID {existingOrderItem.ProductId} not found", ErrorCode = 404 });
+                    }
+
+                    // Restore stock for removed or reduced items
+                    var updatedOrderItem = updatedOrder.Items.FirstOrDefault(i => i.ProductId == existingOrderItem.ProductId);
+                    if (updatedOrderItem == null || updatedOrderItem.Quantity < existingOrderItem.Quantity)
+                    {
+                        var quantityToRestore = existingOrderItem.Quantity - (updatedOrderItem?.Quantity ?? 0);
+                        product.Stock += quantityToRestore;
+                        await _productService.UpdateStockAsync(product, product.Stock);
+                    }
+                }
+
+
+                existingOrder.Items = updatedOrder.Items.Select(itemDto =>
+                {
+                    var product = _productService.GetProductByIdAsync(itemDto.ProductId).Result; // Avoid async calls in a loop
+                    if (product == null)
+                    {
+                        throw new Exception($"Product with ID {itemDto.ProductId} not found.");
+                    }
+
+                    // Check stock availability
+                    if (itemDto.Quantity > product.Stock)
+                    {
+                        throw new Exception($"Not enough stock for product: {product.Name}. Available: {product.Stock}, Requested: {itemDto.Quantity}");
+                    }
+
+                    // Decrement stock for newly added or updated items
+                    var existingItem = existingOrder.Items.FirstOrDefault(i => i.ProductId == itemDto.ProductId);
+                    var quantityDifference = itemDto.Quantity - (existingItem?.Quantity ?? 0);
+                    product.Stock -= quantityDifference;
+                    _productService.UpdateStockAsync(product, product.Stock).Wait();
+
+                    return new OrderItem
+                    {
+                        ProductId = itemDto.ProductId,
+                        Quantity = itemDto.Quantity,
+                        UnitPrice = itemDto.UnitPrice,
+                        Status = itemDto.Status
+                    };
                 }).ToList();
             }
+
             existingOrder.Note = updatedOrder.Note ?? existingOrder.Note;
 
             await _orderService.UpdateOrderAsync(existingOrder);
@@ -229,41 +274,57 @@ namespace omnicart_api.Controllers
         }
 
 
-
-
         // Create a new order for the customer
-        //[HttpPost]
-        //public async Task<ActionResult<AppResponse<Order>>> CreateOrder([FromBody] Order newOrder)
-        //{
-        //    var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        //    if (userId == null)
-        //    {
-        //        return Unauthorized(new AppResponse<string>
-        //        {
-        //            Success = false,
-        //            Message = "User is not authenticated",
-        //            ErrorCode = 401
-        //        });
-        //    }
+        [HttpPost]
+        public async Task<ActionResult<AppResponse<Order>>> CreateOrder([FromBody] Order newOrder)
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "User is not authenticated",
+                    ErrorCode = 401
+                });
+            }
 
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return UnprocessableEntity(new AppResponse<Product>
-        //        {
-        //            Success = false,
-        //            Message = "One or more validation errors occurred.",
-        //            Error = "Unprocessable Entity",
-        //            ErrorCode = 422,
-        //            ErrorData = UnprocessableEntity(ModelState)
-        //        });
-        //    }
+            if (!ModelState.IsValid)
+            {
+                return UnprocessableEntity(new AppResponse<Product>
+                {
+                    Success = false,
+                    Message = "One or more validation errors occurred.",
+                    Error = "Unprocessable Entity",
+                    ErrorCode = 422,
+                    ErrorData = UnprocessableEntity(ModelState)
+                });
+            }
 
-        //    newOrder.UserId = userId;
+            newOrder.UserId = userId;
 
-        //    await _orderService.CreateOrderAsync(newOrder);
-        //    return Ok(new AppResponse<Order> { Success = true, Data = newOrder, Message = "Order created successfully" });
-        //}
+            // Decrement stock for each product in the order
+            foreach (var orderItem in newOrder.Items)
+            {
+                var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
+                if (product == null)
+                {
+                    return NotFound(new AppResponse<string> { Success = false, Message = "Product not found", ErrorCode = 404 });
+                }
 
+                // Check if there is enough stock available
+                if (product.Stock < orderItem.Quantity)
+                {
+                    return BadRequest(new AppResponse<string> { Success = false, Message = $"Not enough stock for product: {product.Name}", ErrorCode = 400 });
+                }
 
+                // Decrement the stock
+                product.Stock -= orderItem.Quantity;
+                await _productService.UpdateStockAsync(product!, product.Stock);
+            }
+
+            await _orderService.CreateOrderAsync(newOrder);
+            return Ok(new AppResponse<Order> { Success = true, Data = newOrder, Message = "Order created successfully" });
+        }
     }
 }

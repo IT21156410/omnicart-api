@@ -18,11 +18,15 @@ namespace omnicart_api.Services
     {
         private readonly IMongoCollection<Product> _productCollection;
 
-        public ProductService(IOptions<MongoDbSettings> mongoDbSettings)
+        private readonly NotificationService _notificationService;
+
+        public ProductService(IOptions<MongoDbSettings> mongoDbSettings, NotificationService notificationService)
         {
             var mongoClient = new MongoClient(mongoDbSettings.Value.ConnectionString);
             var mongoDatabase = mongoClient.GetDatabase(mongoDbSettings.Value.DatabaseName);
             _productCollection = mongoDatabase.GetCollection<Product>(mongoDbSettings.Value.ProductsCollectionName);
+
+            _notificationService = notificationService;
         }
 
         // Create a new product
@@ -271,10 +275,25 @@ namespace omnicart_api.Services
         }
 
         // Manage stock: Add/Remove stock
-        public async Task UpdateStockAsync(string id, int newStock)
+        public async Task UpdateStockAsync(Product product, int newStock)
         {
-            var filter = Builders<Product>.Filter.Eq(p => p.Id, id);
+            var filter = Builders<Product>.Filter.Eq(p => p.Id, product.Id);
             var update = Builders<Product>.Update.Set(p => p.Stock, newStock);
+
+
+            // Send notification if stock is low
+            if (newStock <= 10) // Define your stock alert threshold
+            {
+                var notification = new NotificationRequest
+                {
+                    UserId = product.UserId, // Product belongs vendor userId
+                    Title = "Low Stock Alert",
+                    Message = $"Stock for {product.Name} is low. Only {product.Stock} items left.",
+                    Roles = null
+                };
+                await _notificationService.CreateNotificationAsync(notification);
+            }
+
             await _productCollection.UpdateOneAsync(filter, update);
         }
 

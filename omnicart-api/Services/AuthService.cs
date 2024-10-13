@@ -30,13 +30,16 @@ namespace omnicart_api.Services
         private readonly UserService _userService;
         private readonly IOptions<JwtSettings> _jwtSettings;
 
+        private readonly NotificationService _notificationService;
+
         /// <summary>
         /// Initializes the AuthService with MongoDB client, database, and users collection.
         /// </summary>
         /// <param name="mongoDbSettings"></param>
         /// <param name="jwtSettings"></param>
         /// <param name="userService"></param>
-        public AuthService(IOptions<MongoDbSettings> mongoDbSettings, IOptions<JwtSettings> jwtSettings, UserService userService)
+        /// <param name="notificationService"></param>
+        public AuthService(IOptions<MongoDbSettings> mongoDbSettings, IOptions<JwtSettings> jwtSettings, UserService userService, NotificationService notificationService)
         {
             var mongoClient = new MongoClient(mongoDbSettings.Value.ConnectionString);
             var mongoDatabase = mongoClient.GetDatabase(mongoDbSettings.Value.DatabaseName);
@@ -46,6 +49,8 @@ namespace omnicart_api.Services
             _userService = userService;
             _jwtSettings = jwtSettings;
             _jwtSecret = jwtSettings.Value.Key;
+
+            _notificationService = notificationService;
         }
 
         /// <summary>
@@ -101,6 +106,18 @@ namespace omnicart_api.Services
             await Generate2FAVerifyTokenAsync(newUser);
 
             newUser.Password = "";
+
+            if (registerRequest.Role == Role.customer)
+            {
+                var notification = new NotificationRequest
+                {
+                    UserId = null,
+                    Title = "New Customer Registration!",
+                    Message = "New Customer registered and please approve the account by reviewing the application!",
+                    Roles = Role.csr,
+                };
+                await _notificationService.CreateNotificationAsync(notification);
+            }
 
             return new AuthResponse(new UserDto(newUser), token);
         }
