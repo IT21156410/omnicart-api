@@ -29,6 +29,40 @@ public class UserController : ControllerBase
         _userService = userService;
     }
 
+    /// <summary>
+    /// Handles GET requests to retrieve all users
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet]
+    [Authorize(Roles = "csr,admin")]
+    public async Task<ActionResult<AppResponse<List<User>>>> Get()
+    {
+        try
+        {
+            var users = await _userService.GetUsersAsync();
+            var response = new AppResponse<List<User>>
+            {
+                Success = true,
+                Data = users,
+                Message = "Users retrieved successfully"
+            };
+            return response;
+        }
+        catch (Exception ex)
+        {
+            var response = new AppResponse<List<User>>
+            {
+                Success = false,
+                Data = [],
+                Message = "An error occurred while retrieving users",
+                Error = ex.Message,
+                ErrorCode = 500
+            };
+
+            return StatusCode(500, response);
+        }
+    }
+
 
     // Activate/Deactivate a product
     [HttpPatch("{id:length(24)}/activate")]
