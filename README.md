@@ -1,6 +1,6 @@
-# ASP.NET Web Application - Omnicart
+# C# ASP.NET Web Application - Omnicart
 
-### Developer: **Fonseka M.M.N.H.**
+### **EAD SE4040 - ASSIGNMENT**
 
 This repository contains the **Omnicart** web application, which handles user management, product management, inventory management, and vendor management. The system is built using **ASP.NET Core** and includes a RESTful API to manage products, vendors, users, and notifications. Additionally, it covers mobile application features through API endpoints that allow customers to browse and purchase products.
 
