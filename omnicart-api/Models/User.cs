@@ -169,6 +169,13 @@ namespace omnicart_api.Models
         public required Role Role { get; set; } = Role.customer;
     }
 
+    public class UpdateProfileUserDto
+    {
+        public required string Name { get; set; }
+        public required string Email { get; set; }
+ 
+    }
+
     public class UpdateUserStatusDto
     {
         [Required] [BsonElement("isActive")] public bool IsActive { get; set; } = false;
