@@ -1,4 +1,4 @@
-# C# ASP.NET Web Application - Omnicart
+# C# ASP.NET Web API - Omnicart
 
 ### **EAD SE4040 - ASSIGNMENT**
 
@@ -111,7 +111,7 @@ The **Omnicart** system aims to facilitate the management of an e-commerce platf
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-repo/omnicart.git
+   git clone https://github.com/IT21156410/omnicart-api.git
 2. **Open the project using VS 2022 Or JetBrain Rider IDEA**
      
 3. **Run IIS Express Server**
