@@ -9,6 +9,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using omnicart_api.Models;
 using omnicart_api.Requests;
 using omnicart_api.Services;
@@ -25,16 +26,18 @@ namespace omnicart_api.Controllers
         private readonly AuthService _authService;
         private readonly UserService _userService;
         private readonly string _adminToken;
+        private readonly IOptions<AuthSettings> _authSettings;
 
         /// <summary>
         /// Initializes the AuthController with AuthService dependency.
         /// </summary>
         /// <param name="authService">The authentication service</param>
-        public AuthController(AuthService authService, UserService userService)
+        public AuthController(AuthService authService, UserService userService, IOptions<AuthSettings> authSettings)
         {
             _authService = authService;
             _userService = userService;
-            _adminToken = "ApilageAdmin@2024*RataAnurata*Mama#OSMA"; // TODO: get from env
+            _authSettings = authSettings;
+            _adminToken = authSettings.Value.AdminToken;
         }
 
         /// <summary>

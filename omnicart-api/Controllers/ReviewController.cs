@@ -93,8 +93,7 @@ namespace omnicart_api.Controllers
         /// <param name="customerId">The ID of the customer</param>
         /// <returns>A list of reviews by the customer</returns>
         [HttpGet("customer/{customerId}")]
-        [Authorize(Roles = "customer")]
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "customer,admin")]
         public async Task<ActionResult<AppResponse<List<Review>>>> GetReviewsByCustomerId(string customerId)
         {
             var reviews = await _reviewService.GetReviewsByCustomerIdAsync(customerId);
