@@ -147,7 +147,7 @@ namespace omnicart_api.Controllers.Vendor
             var pendingOrders = await _orderService.GetOrdersByProductIdAsync(id, new List<OrderStatus> { OrderStatus.Pending, OrderStatus.Processing });
             if (pendingOrders.Any())
             {
-                return BadRequest(new AppResponse<string>
+                return UnprocessableEntity(new AppResponse<string>
                 {
                     Success = false,
                     Message = "Product cannot be deleted because it is part of pending orders."

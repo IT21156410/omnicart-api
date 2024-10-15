@@ -33,7 +33,7 @@ namespace omnicart_api.Controllers.Admin
         {
             _userService = userService;
         }
- 
+
         /// <summary>
         ///  Handles GET requests to retrieve a specific user by ID.
         /// </summary>
@@ -70,6 +70,18 @@ namespace omnicart_api.Controllers.Admin
         [HttpPost]
         public async Task<ActionResult<AppResponse<User>>> Post(User newUser)
         {
+            // Validate if email already exists
+            var existingUser = await _userService.GetUserByEmailAsync(newUser.Email);
+            if (existingUser != null)
+            {
+                return UnprocessableEntity(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "Email is already in use.",
+                    ErrorCode = 409 // Conflict status code
+                });
+            }
+
             var user = await _userService.CreateUserAsync(newUser);
             var response = new AppResponse<User>
             {
@@ -99,6 +111,21 @@ namespace omnicart_api.Controllers.Admin
                     Message = "User not found",
                     ErrorCode = 404
                 });
+            }
+
+            // Validate if email is unique, ignoring the current user's email
+            if (updatedUser.Email != existingUser.Email)
+            {
+                var userWithSameEmail = await _userService.GetUserByEmailAsync(updatedUser.Email);
+                if (userWithSameEmail != null)
+                {
+                    return UnprocessableEntity(new AppResponse<string>
+                    {
+                        Success = false,
+                        Message = "Email is already in use.",
+                        ErrorCode = 409 // Conflict status code
+                    });
+                }
             }
 
             existingUser.Name = updatedUser.Name;
