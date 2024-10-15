@@ -25,16 +25,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: myAllowSpecificOrigins,
-                      policy =>
-                      {
-                          policy.WithOrigins("http://localhost:5173")
-                                .AllowAnyHeader()
-                                .AllowAnyMethod()
-                                .AllowCredentials()
-                                .WithExposedHeaders("Access-Control-Allow-Origin")
-                                .SetIsOriginAllowed((_) => true)
-                                .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
-                      });
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .WithExposedHeaders("Access-Control-Allow-Origin")
+                .SetIsOriginAllowed((_) => true)
+                .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+        });
 });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -58,6 +58,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 context.Response.OnStarting(async () =>
                 {
+                    // Modify response to include CORS headers on unauthorized (401) responses
+                    context.Response.Headers.AccessControlAllowOrigin = "http://localhost:5173";
+                    context.Response.Headers.AccessControlAllowCredentials = "true";
+
                     context.Response.ContentType = "application/json";
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
 
@@ -74,13 +78,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 });
 
                 return Task.CompletedTask;
-
             },
             OnForbidden = context =>
             {
                 context.Response.OnStarting(async () =>
                 {
-
                     context.Response.ContentType = "application/json";
                     //context.Response.StatusCode = StatusCodes.Status403Forbidden;
 
@@ -97,7 +99,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 });
 
                 return Task.CompletedTask;
-
             }
         };
     });
