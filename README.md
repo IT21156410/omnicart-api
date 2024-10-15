@@ -113,8 +113,8 @@ The **Omnicart** system aims to facilitate the management of an e-commerce platf
 - Customer could set the rankings and the average ranking should be stored and visible to user. ✔️
 - Customer comments for the vendor and the rankings cannot be modified. ✔️
 - Customer could change the comment which they have created. ✔️
-- User could rank the vendor based on the product purchase experience. ✔️
-- User could comment on the vendor based on the product purchase experience. ✔️
+- Customer could rank the vendor based on the product purchase experience. ✔️
+- Customer could comment on the vendor based on the product purchase experience. ✔️
 
 #### g) **Customer Order Management**:
 - CSR, Administrator could be able to see the status of customer order and cancel it when customer request to cancel. It should define a note when cancelling the Customer Order. Once the order is cancelled, it should inform to customer as a notification. ✔️
