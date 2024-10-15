@@ -77,7 +77,7 @@ The **Omnicart** system aims to facilitate the management of an e-commerce platf
 
 ## Contribution 
 
-**Fonseka M.M.N.H. - IT21156410**:
+👨‍🎓**Fonseka M.M.N.H. - IT21156410**:
 
 #### a) **User Management**:
 - Created web application users with distinct roles: Administrator, Vendor, and Customer Service Representative (CSR). ✔️
@@ -96,6 +96,35 @@ The **Omnicart** system aims to facilitate the management of an e-commerce platf
 
 #### e) **Vendor Management**:
 - Created the vendor management functionality, including the creation of vendor profiles, restricted to Administrators. ✔️
+
+👨‍🎓**Prashantha K.G.M. - IT21169908**:
+
+#### a) **User Management**:
+- Allow customers to create their own accounts (using their email as the primary key) & Authenticate Users. ✔️
+- Allow users to Two factor authentication & forgot password and password reset. ✔️
+
+#### c) **Order Management**:
+- Creating new orders (with order status tracking from processing to delivery). ✔️
+- Updating order details (before the order is dispatched). ✔️
+- Canceling orders (before the order is dispatched). ✔️
+- Enable customers to track the status of their orders and view order history. ✔️
+
+#### e) **Vendor Management**:
+- Customer could set the rankings and the average ranking should be stored and visible to user. ✔️
+- Customer comments for the vendor and the rankings cannot be modified. ✔️
+- Customer could change the comment which they have created. ✔️
+- User could rank the vendor based on the product purchase experience. ✔️
+- User could comment on the vendor based on the product purchase experience. ✔️
+
+#### g) **Customer Order Management**:
+- CSR, Administrator could be able to see the status of customer order and cancel it when customer request to cancel. It should define a note when cancelling the Customer Order. Once the order is cancelled, it should inform to customer as a notification. ✔️
+- CSR, Administrator and Vendor could be able to see the status of customer order and mark it as delivered. Once it is marked as delivered, it should be informed to Customer. ✔️
+- If the Order contains products of multiple Vendors, Particular vendor can mark their product is ready and set the Order status as partially delivered. Once all vendors set the order as delivered, Order will be automatically move into delivered state. Other than that, CSR and Administrator could mark the Order as Delivered directly ( Assuming that, they collect goods from Vendors and deliver from their end or they get stocks from warehouse). ✔️
+- Allow CSR to create order cancellation requests by customer phone call through requests. ✔️
+
+#### b) **Product Browsing and Purchasing**:
+- Enable customers to add products to their cart, place orders, and make payments. ✔️
+- CSR or Administrator or Vendor could mark it as delivered. ✔️
 
 ---
 ### Technologies Used
