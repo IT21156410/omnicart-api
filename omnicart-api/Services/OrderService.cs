@@ -218,6 +218,12 @@ namespace omnicart_api.Services
             return await _cancelRequestsCollection.Find(request => true).ToListAsync();
         }
 
+        // Get a cancellation request by Order ID
+        public async Task<CancelRequest?> GetRequestByOrderIdAsync(string orderId)
+        {
+            return await _cancelRequestsCollection.Find(request => request.OrderId == orderId).FirstOrDefaultAsync();
+        }
+
 
         // Generate a Unique Order Number
         public string GenerateOrderNumber()

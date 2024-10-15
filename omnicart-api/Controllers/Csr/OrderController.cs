@@ -43,9 +43,21 @@ namespace omnicart_api.Controllers.Csr
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
             var existingOrder = await _orderService.GetOrderByIdAsync(id);
 
+            var cancellationRequest = await _orderService.GetRequestByOrderIdAsync(id);
+
             if (existingOrder == null)
             {
                 return NotFound(new AppResponse<Order> { Success = false, Message = "Order not found" });
+            }
+
+            if (cancellationRequest == null)
+            {
+                return NotFound(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "Cancellation request not found",
+                    ErrorCode = 404
+                });
             }
 
             // Ensure the order is not already dispatched or delivered
