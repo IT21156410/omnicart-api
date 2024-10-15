@@ -69,6 +69,10 @@ namespace omnicart_api.Models
         [Required]
         [BsonElement("isApproved")]
         public bool IsApproved { get; set; }
+
+        [Required]
+        [BsonElement("request")]
+        public CancelRequest Request { get; set; }
     }
 
 }

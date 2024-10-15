@@ -61,5 +61,19 @@ namespace omnicart_api.Controllers.Admin
 
             return Ok(new AppResponse<Product> { Success = true, Data = existingProduct, Message = $"Product status updated to {status.Status}" });
         }
+
+        // Get a product by ID
+        [HttpGet("{id:length(24)}")]
+        [Authorize(Roles = "admin")]
+        public async Task<ActionResult<AppResponse<Product>>> GetProductById(string id)
+        {
+            var product = await _productService.GetProductByIdAsync(id);
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            if (product == null)
+                return NotFound(new AppResponse<Product> { Success = false, Message = "Product not found" });
+
+            return Ok(new AppResponse<Product> { Success = true, Data = product, Message = "Product retrieved successfully" });
+        }
     }
 }

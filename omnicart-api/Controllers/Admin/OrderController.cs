@@ -169,6 +169,11 @@ namespace omnicart_api.Controllers.Admin
         public async Task<ActionResult<AppResponse<string>>> ProcessCancellationRequest(string requestId, [FromBody] ProcessCancelDto processDto)
         {
             var cancellationRequest = await _orderService.GetRequestByIdAsync(requestId);
+            var existingOrder = await _orderService.GetOrderByIdAsync(processDto.Request.OrderId);
+
+            if (existingOrder == null)
+                return NotFound(new AppResponse<Order> { Success = false, Message = "Order not found" });
+
             if (cancellationRequest == null)
             {
                 return NotFound(new AppResponse<string>
@@ -192,15 +197,13 @@ namespace omnicart_api.Controllers.Admin
             cancellationRequest.Status = processDto.IsApproved ? CancelRequestStatus.Approved : CancelRequestStatus.Rejected;
 
             await _orderService.UpdateRequestAsync(cancellationRequest);
-
             if (processDto.IsApproved)
             {
-                //var order = await _orderService.GetOrderByIdAsync(cancellationRequest.OrderId);
-                //order.Status = OrderStatus.Cancelled;
-                //await _orderService.UpdateOrderStatusAsync(order.Id, OrderStatus.Cancelled, "Order cancelled by CSR.");
-
-                // TODO: notify customer about the cancellation
+                var reason = "Canceled Admin, by customer's request: " + processDto.Request.Reason;
+                await _orderService.UpdateOrderStatusAsync(existingOrder, OrderStatus.Cancelled, reason);
             }
+
+            // TODO: notify customer about the cancellation
 
             return Ok(new AppResponse<string>
             {

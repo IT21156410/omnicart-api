@@ -244,6 +244,16 @@ namespace omnicart_api.Controllers
                 });
             }
 
+            if (existingOrder.Status == OrderStatus.Cancelled)
+            {
+                return BadRequest(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "Order is already cancelled",
+                    ErrorCode = 400
+                });
+            }
+
             if (existingOrder.Status != OrderStatus.Processing && existingOrder.Status != OrderStatus.Pending)
             {
                 return BadRequest(new AppResponse<string>
