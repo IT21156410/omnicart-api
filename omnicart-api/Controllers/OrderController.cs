@@ -17,7 +17,6 @@ namespace omnicart_api.Controllers
 {
     [Route("api/auth/orders")]
     [ApiController]
-    [Authorize(Roles = "customer")]
     [ServiceFilter(typeof(ValidateModelAttribute))]
     public class OrderController : ControllerBase
     {
@@ -31,6 +30,7 @@ namespace omnicart_api.Controllers
         }
 
         [HttpGet("history")]
+        [Authorize(Roles = "customer")]
         public async Task<ActionResult> GetOrderHistory()
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
@@ -65,6 +65,7 @@ namespace omnicart_api.Controllers
         }
 
         [HttpGet("track/{orderId}")]
+        [Authorize(Roles = "customer")]
         public async Task<ActionResult> TrackOrder(string orderId)
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
@@ -100,6 +101,7 @@ namespace omnicart_api.Controllers
 
         // Update an existing order before it's dispatched
         [HttpPut("{orderId}")]
+        [Authorize(Roles = "customer")]
         public async Task<ActionResult<AppResponse<Order>>> UpdateOrder(string orderId, [FromBody] UpdateOrderDto updatedOrder)
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
@@ -220,9 +222,11 @@ namespace omnicart_api.Controllers
 
         // Order cancel request
         [HttpPost("{orderId}/cancel-request")]
+        [Authorize(Roles = "customer,csr")]
         public async Task<ActionResult<AppResponse<string>>> RequestCancellation(string orderId, [FromBody] CancelRequestDto requestDto)
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
             if (userId == null)
             {
                 return Unauthorized(new AppResponse<string>
@@ -234,7 +238,7 @@ namespace omnicart_api.Controllers
             }
 
             var existingOrder = await _orderService.GetOrderByIdAsync(orderId);
-            if (existingOrder == null || existingOrder.UserId != userId)
+            if (existingOrder == null || (existingOrder.UserId != userId && userRole == "customer"))
             {
                 return NotFound(new AppResponse<string>
                 {
@@ -250,6 +254,17 @@ namespace omnicart_api.Controllers
                 {
                     Success = false,
                     Message = "Order is already cancelled",
+                    ErrorCode = 400
+                });
+            }
+
+            var existingRequest = await _orderService.GetRequestByOrderIdAsync(orderId);
+            if (existingRequest != null)
+            {
+                return BadRequest(new AppResponse<string>
+                {
+                    Success = false,
+                    Message = "Cancellation request already added",
                     ErrorCode = 400
                 });
             }
@@ -286,6 +301,7 @@ namespace omnicart_api.Controllers
 
         // Create a new order for the customer
         [HttpPost]
+        [Authorize(Roles = "customer")]
         public async Task<ActionResult<AppResponse<Order>>> CreateOrder([FromBody] Order newOrder)
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
