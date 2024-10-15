@@ -32,6 +32,39 @@ public class CategoryController : ControllerBase
 
 
     /// <summary>
+    /// Handles GET requests to retrieve all categories
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet]
+    public async Task<ActionResult<AppResponse<List<Category>>>> Get()
+    {
+        try
+        {
+            var categories = await _categoryService.GetCategoriesAsync();
+            var response = new AppResponse<List<Category>>
+            {
+                Success = true,
+                Data = categories,
+                Message = "Categories retrieved successfully"
+            };
+            return response;
+        }
+        catch (Exception ex)
+        {
+            var response = new AppResponse<List<Category>>
+            {
+                Success = false,
+                Data = [],
+                Message = "An error occurred while retrieving categories",
+                Error = ex.Message,
+                ErrorCode = 500
+            };
+
+            return StatusCode(500, response);
+        }
+    }
+
+    /// <summary>
     ///  Handles GET requests to retrieve a specific category by ID.
     /// </summary>
     /// <param name="id">The ObjectId of the category</param>

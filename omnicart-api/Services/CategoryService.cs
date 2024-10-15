@@ -23,9 +23,13 @@ public class CategoryService
         _categoryCollection = mongoDatabase.GetCollection<Category>(mongoDbSettings.Value.CategoriesCollectionName);
     }
 
-    // Get ALl categories
+    // Get All categories
     public async Task<List<Category>> GetCategoriesAsync() =>
         await _categoryCollection.Find(_ => true).ToListAsync();
+
+    // Get only active categories where isActive = true
+    public async Task<List<Category>> GetActiveCategoriesAsync() =>
+        await _categoryCollection.Find(category => category.IsActive == true).ToListAsync();
 
     /// <summary>
     /// Get category for given id

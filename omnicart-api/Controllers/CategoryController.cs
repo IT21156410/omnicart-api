@@ -32,15 +32,15 @@ public class CategoryController : ControllerBase
 
 
     /// <summary>
-    /// Handles GET requests to retrieve all categories
+    /// Handles GET requests to retrieve all active categories
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    public async Task<ActionResult<AppResponse<List<Category>>>> Get()
+    public async Task<ActionResult<AppResponse<List<Category>>>> ActiveCategories()
     {
         try
         {
-            var categories = await _categoryService.GetCategoriesAsync();
+            var categories = await _categoryService.GetActiveCategoriesAsync();
             var response = new AppResponse<List<Category>>
             {
                 Success = true,
@@ -63,5 +63,4 @@ public class CategoryController : ControllerBase
             return StatusCode(500, response);
         }
     }
-
 }
