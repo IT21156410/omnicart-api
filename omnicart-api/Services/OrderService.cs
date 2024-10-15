@@ -186,7 +186,7 @@ namespace omnicart_api.Services
             {
                 UserId = null,
                 Title = "New order cancellation requested",
-                Message = $"Order #{request.OrderId} has been requested to be cancelled. Please review the cancellation request",
+                Message = $"Order #{request.OrderId} has been requested to be cancelled ({request.Reason}). Please review the cancellation request",
                 Roles = Role.csr,
             };
             await _notificationService.CreateNotificationAsync(notification);
@@ -208,6 +208,18 @@ namespace omnicart_api.Services
             var update = Builders<CancelRequest>.Update
                 .Set(x => x.Status, request.Status)
                 .Set(x => x.RequestedDate, request.RequestedDate);
+
+            if (request.Status == CancelRequestStatus.Rejected)
+            {
+                var notification = new NotificationRequest
+                {
+                    UserId = request.CustomerId,
+                    Title = "Order cancellation rejected",
+                    Message = $"Your order #{request.OrderId} cancellation request has been rejected.",
+                    Roles = null,
+                };
+                await _notificationService.CreateNotificationAsync(notification);
+            }
 
             await _cancelRequestsCollection.UpdateOneAsync(filter, update);
         }
